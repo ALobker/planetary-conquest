@@ -4,6 +4,7 @@ using System.Collections;
 public class DraggingInteraction : MonoBehaviour {
     public Transform camps;
 
+    private CampScript selectedCamp = null;
     private Transform selectedArrow = null;
     private Vector3 dragStart = Vector3.zero;
 
@@ -26,6 +27,9 @@ public class DraggingInteraction : MonoBehaviour {
                 Transform best = camps.GetChild(0);
                 float bestDist = Vector3.Distance(dragStart, best.position);
                 foreach(Transform camp in camps) {
+                    if (!camp.gameObject.activeInHierarchy)
+                        continue;
+
                     float dist = Vector3.Distance(dragStart, camp.position);
                     if (dist < bestDist)
                     {
@@ -34,8 +38,9 @@ public class DraggingInteraction : MonoBehaviour {
                     }
                 }
                 dragStart = best.position;
-                CampScript campscr = best.GetComponent<CampScript>();
-                selectedArrow = campscr.arrow.transform;
+                selectedCamp = best.GetComponent<CampScript>();
+                selectedArrow = selectedCamp.arrow;
+                selectedArrow.gameObject.SetActive(true);
             }
         }
         if (Input.GetButton("Fire1"))
@@ -46,59 +51,73 @@ public class DraggingInteraction : MonoBehaviour {
             if(Physics.Raycast(ray, out hit, Camera.main.transform.position.magnitude + 0.5f)) {
                 Vector3 dragEnd = hit.point;
                 Debug.DrawLine(dragStart, dragEnd);
-                //find closest base
+
+                //draw arrow in the desired angle
                 if (selectedArrow != null)
                 {
                     Vector3 Projection = Vector3.Project(dragEnd, dragStart);
-                    Vector3 perpendicular = Vector3.forward;
+                    float angle = -AngleSigned(dragEnd - Projection, selectedCamp.transform.right, selectedCamp.transform.up);
+                    //Debug.Log(angle);
 
-                    Quaternion rotation = Quaternion.identity;
-                    if (dragStart.y > 0.9f || dragStart.y < -0.9f)
-                    {
-                        perpendicular = Vector3.Cross(dragStart, Vector3.forward);
-                        float sign = dragEnd.z < dragStart.z ? -1f : 1f;
-                        float angle = sign * Vector3.Angle(dragEnd - Projection, perpendicular);
-                        //Debug.Log(angle);
-
-                        if(dragStart.y > 0)
-                            rotation = Quaternion.Euler(0, 90 - angle, 0);
-                        else
-                            rotation = Quaternion.Euler(0, -90 + angle, 180);
-                    }
-                    else
-                    {
-                        perpendicular = Vector3.Cross(dragStart, Vector3.up);
-                        float sign = dragEnd.y > dragStart.y ? -1f : 1f;
-                        float angle = sign * Vector3.Angle(dragEnd - Projection, perpendicular);
-                        //Debug.Log(angle);
-
-                        // -180     0 -70 90 == 180 110 -90
-                        // -90      -70 0 0 == -110 -180 -180
-                        // 0        0 70 -90 == -180 -110 90
-                        // 90       70 0 -180
-                        // 180      0 -70 90 == 180 110 -90
-
-                        //selectedArrow.Rotate(dragStart, angle);
-                        //Debug.Log(campAngle);
-                        //-90 * z
-                        // 1  back   -90   z
-                        // 2  front   90  -z
-                        // 3  left  -180  -x
-                        // 4  right    0   x
-                        float campAngle = Vector3.Angle(dragStart, Vector3.right) * (dragStart.z > 0 ? -1 : 1);
-                        rotation = Quaternion.Euler(angle, campAngle, -90);
-                    }
-
-                    Quaternion offset = Quaternion.Euler(20, 0, 0);
-                    selectedArrow.transform.rotation = rotation * offset;
+                    Quaternion rotation = Quaternion.Euler(new Vector3(0, angle, 0));
+                    //Quaternion offset = Quaternion.Euler(20, 0, 0);
+                    //selectedArrow.transform.rotation = rotation * offset;
+                    selectedArrow.transform.localRotation = rotation;
                 }
             }
-            //find cardinal directions
-            //set arrow direction
         }
         if (Input.GetButtonUp("Fire1"))
         {
             //set arrow
+
+            //select intended neighbour
+            //do raycast
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hit, Camera.main.transform.position.magnitude + 0.5f))
+            {
+                Vector3 dragEnd = hit.point;
+
+                if (Vector3.Distance(dragStart, dragEnd) < 1f || selectedCamp.neighbours.Length == 0)
+                {
+                    selectedArrow.gameObject.SetActive(false);
+                }
+                else
+                {
+                    Vector3 Projection = Vector3.Project(dragEnd, dragStart);
+                    float angle = -AngleSigned(dragEnd - Projection, selectedCamp.transform.right, selectedCamp.transform.up);
+
+                    CampScript[] neighs = selectedCamp.neighbours;
+                    CampScript bestNeigh = neighs[0];
+                    float campAngle = -AngleSigned(bestNeigh.transform.position - Vector3.Project(bestNeigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
+                    float bestAngle = Mathf.Abs(campAngle - angle);
+                    foreach (CampScript neigh in neighs)
+                    {
+                        campAngle = -AngleSigned(neigh.transform.position - Vector3.Project(neigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
+                        float diff = Mathf.Abs(campAngle - angle);
+                        if (diff < bestAngle)
+                        {
+                            bestNeigh = neigh;
+                            bestAngle = diff;
+                        }
+                    }
+
+                    campAngle = -AngleSigned(bestNeigh.transform.position - Vector3.Project(bestNeigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
+                    Quaternion rotation = Quaternion.Euler(new Vector3(0, campAngle, 0));
+                    selectedArrow.transform.localRotation = rotation;
+                }
+            }
+            else
+            {
+                selectedArrow.gameObject.SetActive(false);
+            }
         }
 	}
+
+    public static float AngleSigned(Vector3 v1, Vector3 v2, Vector3 n)
+    {
+        return Mathf.Atan2(
+            Vector3.Dot(n, Vector3.Cross(v1, v2)),
+            Vector3.Dot(v1, v2)) * Mathf.Rad2Deg;
+    }
 }

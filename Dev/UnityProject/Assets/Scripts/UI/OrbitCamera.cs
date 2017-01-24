@@ -54,7 +54,6 @@ public class OrbitCamera : MonoBehaviour
         _y = angles.y;
 
         this.Rotate(_x, _y);
-
     }
 
     /**
@@ -79,10 +78,10 @@ public class OrbitCamera : MonoBehaviour
         {
             _x += Input.GetAxis("Mouse X") * _xSpeed;
             _y += -Input.GetAxis("Mouse Y") * _ySpeed;
+            _y = Mathf.Clamp(_y, -90f, 90f);
 
             this.Rotate(_x, _y);
         }
-
     }
 
     /**
@@ -116,7 +115,6 @@ public class OrbitCamera : MonoBehaviour
         {
             this.ZoomIn();
         }
-
     }
 
     /**
@@ -126,6 +124,7 @@ public class OrbitCamera : MonoBehaviour
     void ZoomIn()
     {
         _distance -= _zoomStep;
+        _distance = Mathf.Clamp(_distance, 2f, 50f);
         _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
         this.Rotate(_x, _y);
     }
@@ -137,8 +136,8 @@ public class OrbitCamera : MonoBehaviour
     void ZoomOut()
     {
         _distance += _zoomStep;
+        _distance = Mathf.Clamp(_distance, 2f, 50f);
         _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
         this.Rotate(_x, _y);
     }
-
 } //End class
