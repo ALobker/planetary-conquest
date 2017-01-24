@@ -7,9 +7,18 @@ public class Planet : MonoBehaviour {
 	public float minimumDistance = 0.0f;
 	public float maximumDistance = 10.0f;
 
+	public int perturbRepetitions = 10;
+	public int smoothRepetitions = 2;
+
 
 	public void Start() {
-		perturb();
+		for(int perturbCount = 0; perturbCount < perturbRepetitions; perturbCount++) {
+			perturb();
+		}
+
+		for(int smoothCount = 0; smoothCount < smoothRepetitions; smoothCount++) {
+			smooth();
+		}
 	}
 
 
@@ -41,8 +50,8 @@ public class Planet : MonoBehaviour {
 
 		Vector3[] vertices = mesh.vertices;
 
-		for(int index = 0; index < vertices.Length; index++) {
-			Vector3 vertex = vertices[index];
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			Vector3 vertex = vertices[vertexIndex];
 
 			float sign = faultPlane.GetSide(vertex) ? 1 : -1;
 
@@ -58,7 +67,7 @@ public class Planet : MonoBehaviour {
 
 			vertex *= actualInterpolation;
 
-			vertices[index] = vertex;
+			vertices[vertexIndex] = vertex;
 		}
 
 		mesh.vertices = vertices;
@@ -75,102 +84,50 @@ public class Planet : MonoBehaviour {
 		int[] triangles = mesh.triangles;
 
 		int[][] neighbours = new int[vertices.Length][];
-
-		for(int index = 0; index < vertices.Length; index++) {
-			neighbours[index] = new int[] { 0, -1, -1, -1, -1, -1, -1 };
+		
+		// Each neighbour is included twice, so include the vertex itself twice in the average as well.
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			neighbours[vertexIndex] = new int[] { 2, vertexIndex, vertexIndex, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 		}
 
-		for(int index = 0; index < triangles.Length; index += 3) {
-			int index1 = triangles[index];
-			int index2 = triangles[index + 1];
-			int index3 = triangles[index + 2];
+		// Each neighbour is included twice, but it saves on a lot of logic without affecting the average.
+		for(int triangeIndex = 0; triangeIndex < triangles.Length; triangeIndex += 3) {
+			int vertexIndex1 = triangles[triangeIndex];
+			int vertexIndex2 = triangles[triangeIndex + 1];
+			int vertexIndex3 = triangles[triangeIndex + 2];
 			
-			int neighbourCount1 = neighbours[index1][0];
-			int neighbourCount2 = neighbours[index2][0];
-			int neighbourCount3 = neighbours[index3][0];
-
-			bool index1ContainsIndex2 = false;
-			bool index1ContainsIndex3 = false;
-			for(int indexIndex = 1; indexIndex < 7; indexIndex++) {
-				if(neighbours[index1][indexIndex] == index2) {
-					index1ContainsIndex2 = true;
-				}
-				if(neighbours[index1][indexIndex] == index3) {
-					index1ContainsIndex3 = true;
-				}
-			}
-
-			bool index2ContainsIndex1 = false;
-			bool index2ContainsIndex3 = false;
-			for(int indexIndex = 1; indexIndex < 7; indexIndex++) {
-				if(neighbours[index2][indexIndex] == index1) {
-					index2ContainsIndex1 = true;
-				}
-				if(neighbours[index2][indexIndex] == index3) {
-					index2ContainsIndex3 = true;
-				}
-			}
-
-			bool index3ContainsIndex1 = false;
-			bool index3ContainsIndex2 = false;
-			for(int indexIndex = 1; indexIndex < 7; indexIndex++) {
-				if(neighbours[index3][indexIndex] == index1) {
-					index3ContainsIndex1 = true;
-				}
-				if(neighbours[index3][indexIndex] == index2) {
-					index3ContainsIndex2 = true;
-				}
-			}
-
-			if(!index1ContainsIndex2) {
-				neighbours[index1][neighbourCount1 + 1] = index2;
-				neighbourCount1 += 1;
-			}
-			if(!index1ContainsIndex3) {
-				neighbours[index1][neighbourCount1 + 1] = index3;
-				neighbourCount1 += 1;
-			}
-			neighbours[index1][0] = neighbourCount1;
-
-			if(!index2ContainsIndex1) {
-				neighbours[index2][neighbourCount2 + 1] = index1;
-				neighbourCount2 += 1;
-			}
-			if(!index2ContainsIndex3) {
-				neighbours[index2][neighbourCount2 + 1] = index3;
-				neighbourCount2 += 1;
-			}
-			neighbours[index2][0] = neighbourCount2;
-
-			if(!index3ContainsIndex1) {
-				neighbours[index3][neighbourCount3 + 1] = index1;
-				neighbourCount3 += 1;
-			}
-			if(!index3ContainsIndex2) {
-				neighbours[index3][neighbourCount3 + 1] = index2;
-				neighbourCount3 += 1;
-			}
-			neighbours[index3][0] = neighbourCount3;
+			int neighbourCount1 = neighbours[vertexIndex1][0];
+			int neighbourCount2 = neighbours[vertexIndex2][0];
+			int neighbourCount3 = neighbours[vertexIndex3][0];
+			
+			neighbours[vertexIndex1][0] = neighbourCount1 + 2;
+			neighbours[vertexIndex1][neighbourCount1 + 1] = vertexIndex2;
+			neighbours[vertexIndex1][neighbourCount1 + 2] = vertexIndex3;
+			
+			neighbours[vertexIndex2][0] = neighbourCount2 + 2;
+			neighbours[vertexIndex2][neighbourCount2 + 1] = vertexIndex1;
+			neighbours[vertexIndex2][neighbourCount2 + 2] = vertexIndex3;
+			
+			neighbours[vertexIndex3][0] = neighbourCount3 + 2;
+			neighbours[vertexIndex3][neighbourCount3 + 1] = vertexIndex1;
+			neighbours[vertexIndex3][neighbourCount3 + 2] = vertexIndex2;
 		}
 
-		for(int index = 0; index < vertices.Length; index++) {
-			Vector3 vertex = vertices[index];
+		// Calculate the average.
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			float total = 0.0f;
 
-			Vector3 total = vertex;
-
-			int neighbourCount = neighbours[index][0];
+			int neighbourCount = neighbours[vertexIndex][0];
 
 			for(int neighbourIndexIndex = 1; neighbourIndexIndex < neighbourCount + 1; neighbourIndexIndex++) {
-				int neighbourIndex = neighbours[index][neighbourIndexIndex];
+				int neighbourIndex = neighbours[vertexIndex][neighbourIndexIndex];
 
-				Vector3 neighbour = vertices[neighbourIndex];
-
-				total += neighbour;
+				total += vertices[neighbourIndex].magnitude;
 			}
+			
+			float radius = total / neighbourCount;
 
-			total /= (neighbourCount + 1);
-
-			smoothedVertices[index] = total;
+			smoothedVertices[vertexIndex] = vertices[vertexIndex].normalized * radius;
 		}
 
 		mesh.vertices = smoothedVertices;
