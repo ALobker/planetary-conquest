@@ -80,6 +80,7 @@ public class DraggingInteraction : MonoBehaviour {
 
                 if (Vector3.Distance(dragStart, dragEnd) < 1f || selectedCamp.neighbours.Length == 0)
                 {
+                    selectedCamp.selectedNeighbour = null;
                     selectedArrow.gameObject.SetActive(false);
                 }
                 else
@@ -105,10 +106,12 @@ public class DraggingInteraction : MonoBehaviour {
                     campAngle = -AngleSigned(bestNeigh.transform.position - Vector3.Project(bestNeigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
                     Quaternion rotation = Quaternion.Euler(new Vector3(0, campAngle, 0));
                     selectedArrow.transform.localRotation = rotation;
+                    selectedCamp.selectedNeighbour = bestNeigh;
                 }
             }
             else
             {
+                selectedCamp.selectedNeighbour = null;
                 selectedArrow.gameObject.SetActive(false);
             }
         }
