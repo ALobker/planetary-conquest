@@ -10,8 +10,20 @@ public class Planet : MonoBehaviour {
 	public int perturbRepetitions = 10;
 	public int smoothRepetitions = 2;
 
+	
+	private int[][] neighbourTriangles;
+	private int[][] neighbourVertices;
+
 
 	public void Start() {
+		// fault plane
+		// normals
+		// "3D" texture
+		// height shader
+		// slope shader
+
+		findNeighbours();
+
 		for(int perturbCount = 0; perturbCount < perturbRepetitions; perturbCount++) {
 			perturb();
 		}
@@ -19,6 +31,8 @@ public class Planet : MonoBehaviour {
 		for(int smoothCount = 0; smoothCount < smoothRepetitions; smoothCount++) {
 			smooth();
 		}
+
+		calculateNormals();
 	}
 
 
@@ -30,42 +44,155 @@ public class Planet : MonoBehaviour {
 		if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
 			smooth();
 		}
+
+		if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
+			calculateNormals();
+		}
+	}
+
+
+	private void findNeighbours() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+		
+		int[] triangles = mesh.triangles;
+		Vector3[] vertices = mesh.vertices;
+
+		// First pass: count the neighbours.
+		int[] neighbourCounts = new int[vertices.Length];
+
+		for(int trianglesIndex = 0; trianglesIndex < triangles.Length; trianglesIndex += 3) {
+			int vertexIndex1 = triangles[trianglesIndex];
+			int vertexIndex2 = triangles[trianglesIndex + 1];
+			int vertexIndex3 = triangles[trianglesIndex + 2];
+
+			neighbourCounts[vertexIndex1] += 1;
+			neighbourCounts[vertexIndex2] += 1;
+			neighbourCounts[vertexIndex3] += 1;
+		}
+
+		// Second pass: collect the neighbour triangles.
+		int[] neighbourTriangleCounts = new int[vertices.Length];
+		neighbourTriangles = new int[vertices.Length][];
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			int neighbourCount = neighbourCounts[vertexIndex];
+
+			neighbourTriangles[vertexIndex] = new int[neighbourCount];
+		}
+
+		for(int trianglesIndex = 0; trianglesIndex < triangles.Length; trianglesIndex += 3) {
+			int vertexIndex1 = triangles[trianglesIndex];
+			int vertexIndex2 = triangles[trianglesIndex + 1];
+			int vertexIndex3 = triangles[trianglesIndex + 2];
+			
+			int neighbourTriangleCount1 = neighbourTriangleCounts[vertexIndex1];
+			int neighbourTriangleCount2 = neighbourTriangleCounts[vertexIndex2];
+			int neighbourTriangleCount3 = neighbourTriangleCounts[vertexIndex3];
+
+			neighbourTriangleCounts[vertexIndex1] = neighbourTriangleCount1 + 1;
+			neighbourTriangles[vertexIndex1][neighbourTriangleCount1] = trianglesIndex;
+
+			neighbourTriangleCounts[vertexIndex2] = neighbourTriangleCount2 + 1;
+			neighbourTriangles[vertexIndex2][neighbourTriangleCount2] = trianglesIndex;
+
+			neighbourTriangleCounts[vertexIndex3] = neighbourTriangleCount3 + 1;
+			neighbourTriangles[vertexIndex3][neighbourTriangleCount3] = trianglesIndex;
+		}
+
+		// Third pass: collect the neighbour vertices.
+		int[] neighbourVertexCounts = new int[vertices.Length];
+		neighbourVertices = new int[vertices.Length][];
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			int neighbourCount = neighbourCounts[vertexIndex];
+
+			neighbourVertices[vertexIndex] = new int[neighbourCount];
+		}
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			for(int neighbourTrianglesIndex = 0; neighbourTrianglesIndex < neighbourCounts[vertexIndex]; neighbourTrianglesIndex++) {
+				int neighbourTriangleIndex = neighbourTriangles[vertexIndex][neighbourTrianglesIndex];
+
+				int vertexIndex1 = triangles[neighbourTriangleIndex];
+				int vertexIndex2 = triangles[neighbourTriangleIndex + 1];
+				int vertexIndex3 = triangles[neighbourTriangleIndex + 2];
+				
+				int neighbourVertexCount = neighbourVertexCounts[vertexIndex];
+
+				bool vertexIndex1Found = false;
+				bool vertexIndex2Found = false;
+				bool vertexIndex3Found = false;
+
+				if(vertexIndex1 == vertexIndex) {
+					vertexIndex1Found = true;
+				}
+				else if(vertexIndex2 == vertexIndex) {
+					vertexIndex2Found = true;
+				}
+				else if(vertexIndex3 == vertexIndex) {
+					vertexIndex3Found = true;
+				}
+
+				for(int neighbourVerticesIndex = 0; neighbourVerticesIndex < neighbourVertexCount; neighbourVerticesIndex++) {
+					int neighbourVertexIndex = neighbourVertices[vertexIndex][neighbourVerticesIndex];
+
+					if(neighbourVertexIndex == vertexIndex1) {
+						vertexIndex1Found = true;
+					}
+					else if(neighbourVertexIndex == vertexIndex2) {
+						vertexIndex2Found = true;
+					}
+					else if(neighbourVertexIndex == vertexIndex3) {
+						vertexIndex3Found = true;
+					}
+				}
+
+				if(!vertexIndex1Found) {
+					neighbourVertices[vertexIndex][neighbourVertexCount] = vertexIndex1;
+					neighbourVertexCount += 1;
+				}
+
+				if(!vertexIndex2Found) {
+					neighbourVertices[vertexIndex][neighbourVertexCount] = vertexIndex2;
+					neighbourVertexCount += 1;
+				}
+
+				if(!vertexIndex3Found) {
+					neighbourVertices[vertexIndex][neighbourVertexCount] = vertexIndex3;
+					neighbourVertexCount += 1;
+				}
+
+				neighbourVertexCounts[vertexIndex] = neighbourVertexCount;
+			}
+		}
 	}
 
 
 	private void perturb() {
-		// fault plane
-		// normals
-		// "3D" texture
-		// height shader
-		// slope shader
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+
+		Vector3[] vertices = mesh.vertices;
 
 		Vector3 faultPlaneNormal = Random.onUnitSphere;
 		Plane faultPlane = new Plane(faultPlaneNormal, 0.0f);
 
 		float scale = Random.Range(minimumScale, maximumScale);
 
-		MeshFilter meshFilter = GetComponent<MeshFilter>();
-		Mesh mesh = meshFilter.mesh;
-
-		Vector3[] vertices = mesh.vertices;
-
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
 
 			float sign = faultPlane.GetSide(vertex) ? 1 : -1;
-
-			float actualScale = Mathf.Pow(scale, sign);
+			float signedScale = Mathf.Pow(scale, sign);
 
 			float distance = Mathf.Abs(faultPlane.GetDistanceToPoint(vertex));
-
 			float clampedDistance = Mathf.Clamp(distance, minimumDistance, maximumDistance);
 
 			float interpolation = (clampedDistance - minimumDistance) / (maximumDistance - minimumDistance);
+			float interpolatedScale = signedScale + (1.0f - interpolation) * (1.0f - signedScale);
 
-			float actualInterpolation = actualScale + (1.0f - interpolation) * (1.0f - actualScale);
-
-			vertex *= actualInterpolation;
+			vertex *= interpolatedScale;
 
 			vertices[vertexIndex] = vertex;
 		}
@@ -73,63 +200,68 @@ public class Planet : MonoBehaviour {
 		mesh.vertices = vertices;
 	}
 
-	
 	private void smooth() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 
 		Vector3[] vertices = mesh.vertices;
-		Vector3[] smoothedVertices = mesh.vertices;
 
-		int[] triangles = mesh.triangles;
-
-		int[][] neighbours = new int[vertices.Length][];
+		Vector3[] smoothedVertices = new Vector3[mesh.vertexCount];
 		
-		// Each neighbour is included twice, so include the vertex itself twice in the average as well.
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
-			neighbours[vertexIndex] = new int[] { 2, vertexIndex, vertexIndex, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-		}
+			float total = vertices[vertexIndex].magnitude;
 
-		// Each neighbour is included twice, but it saves on a lot of logic without affecting the average.
-		for(int triangeIndex = 0; triangeIndex < triangles.Length; triangeIndex += 3) {
-			int vertexIndex1 = triangles[triangeIndex];
-			int vertexIndex2 = triangles[triangeIndex + 1];
-			int vertexIndex3 = triangles[triangeIndex + 2];
-			
-			int neighbourCount1 = neighbours[vertexIndex1][0];
-			int neighbourCount2 = neighbours[vertexIndex2][0];
-			int neighbourCount3 = neighbours[vertexIndex3][0];
-			
-			neighbours[vertexIndex1][0] = neighbourCount1 + 2;
-			neighbours[vertexIndex1][neighbourCount1 + 1] = vertexIndex2;
-			neighbours[vertexIndex1][neighbourCount1 + 2] = vertexIndex3;
-			
-			neighbours[vertexIndex2][0] = neighbourCount2 + 2;
-			neighbours[vertexIndex2][neighbourCount2 + 1] = vertexIndex1;
-			neighbours[vertexIndex2][neighbourCount2 + 2] = vertexIndex3;
-			
-			neighbours[vertexIndex3][0] = neighbourCount3 + 2;
-			neighbours[vertexIndex3][neighbourCount3 + 1] = vertexIndex1;
-			neighbours[vertexIndex3][neighbourCount3 + 2] = vertexIndex2;
-		}
+			int neighbourVertexCount = neighbourVertices[vertexIndex].Length;
 
-		// Calculate the average.
-		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
-			float total = 0.0f;
+			for(int neighbourVerticesIndex = 0; neighbourVerticesIndex < neighbourVertexCount; neighbourVerticesIndex++) {
+				int neighbourVertexIndex = neighbourVertices[vertexIndex][neighbourVerticesIndex];
 
-			int neighbourCount = neighbours[vertexIndex][0];
-
-			for(int neighbourIndexIndex = 1; neighbourIndexIndex < neighbourCount + 1; neighbourIndexIndex++) {
-				int neighbourIndex = neighbours[vertexIndex][neighbourIndexIndex];
-
-				total += vertices[neighbourIndex].magnitude;
+				total += vertices[neighbourVertexIndex].magnitude;
 			}
 			
-			float radius = total / neighbourCount;
+			float radius = total / (neighbourVertexCount + 1);
 
 			smoothedVertices[vertexIndex] = vertices[vertexIndex].normalized * radius;
 		}
 
 		mesh.vertices = smoothedVertices;
+	}
+
+
+	private void calculateNormals() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+		
+		int[] triangles = mesh.triangles;
+		Vector3[] vertices = mesh.vertices;
+
+		Vector3[] normals = new Vector3[mesh.vertexCount];
+		
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			Vector3 total = Vector3.zero;
+
+			int neighbourTriangleCount = neighbourTriangles[vertexIndex].Length;
+
+			for(int neighbourTrianglesIndex = 0; neighbourTrianglesIndex < neighbourTriangleCount; neighbourTrianglesIndex++) {
+				int neighbourTriangleIndex = neighbourTriangles[vertexIndex][neighbourTrianglesIndex];
+
+				int vertexIndex1 = triangles[neighbourTriangleIndex];
+				int vertexIndex2 = triangles[neighbourTriangleIndex + 1];
+				int vertexIndex3 = triangles[neighbourTriangleIndex + 2];
+
+				Vector3 vertex1 = vertices[vertexIndex1];
+				Vector3 vertex2 = vertices[vertexIndex2];
+				Vector3 vertex3 = vertices[vertexIndex3];
+
+				Vector3 right = vertex2 - vertex1;
+				Vector3 left = vertex3 - vertex1;
+
+				total += Vector3.Cross(right, left).normalized;
+			}
+
+			normals[vertexIndex] = Vector3.Normalize(total / neighbourTriangleCount);
+		}
+
+		mesh.normals = normals;
 	}
 }
