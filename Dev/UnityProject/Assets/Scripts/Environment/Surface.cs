@@ -18,6 +18,7 @@ public class Surface : MonoBehaviour {
 	public void Start() {
 		// -fault plane
 		// -normals
+		// continents
 		// "3D" texture
 		// height shader
 		// slope shader
