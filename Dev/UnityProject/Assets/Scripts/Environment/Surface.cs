@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Planet : MonoBehaviour {
+public class Surface : MonoBehaviour {
 	public float minimumScale = 0.8f;
 	public float maximumScale = 1.25f;
 
@@ -16,8 +16,8 @@ public class Planet : MonoBehaviour {
 
 
 	public void Start() {
-		// fault plane
-		// normals
+		// -fault plane
+		// -normals
 		// "3D" texture
 		// height shader
 		// slope shader
