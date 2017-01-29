@@ -3,10 +3,10 @@
 public class Water : MonoBehaviour {
 	private float level = 1.0f;
 
-	public float minimumLevel = 0.9f;
-	public float maximumLevel = 1.1f;
+	public float minimumLevel = 0.99f;
+	public float maximumLevel = 1.01f;
 
-	public float step = 0.01f;
+	public float step = 0.001f;
 
 
 

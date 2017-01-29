@@ -1,14 +1,32 @@
 ﻿using UnityEngine;
 
 public class Surface : MonoBehaviour {
-	public float minimumScale = 0.8f;
-	public float maximumScale = 1.25f;
+	[Header("Crater")]
+	public int minimumNumberOfCraters = 100;
+	public int maximumNumberOfCraters = 100;
 
-	public float minimumDistance = 0.0f;
-	public float maximumDistance = 10.0f;
+	public float minimumCraterRadius = 60.0f;
+	public float maximumCraterRadius = 600.0f;
 
-	public int perturbRepetitions = 10;
-	public int smoothRepetitions = 2;
+	public float minimumCraterScale = 0.995f;
+	public float maximumCraterScale = 1.005f;
+
+	public float minimumCraterDistance = 0.0f;
+	public float maximumCraterDistance = 20.0f;
+
+	[Header("Fault")]
+	public int minimumNumberOfFaults = 0;
+	public int maximumNumberOfFaults = 0;
+
+	public float minimumFaultScale = 0.996f;
+	public float maximumFaultScale = 1.004f;
+
+	public float minimumFaultDistance = 0.0f;
+	public float maximumFaultDistance = 10.0f;
+
+	[Header("Smooth")]
+	public int minimumNumberOfSmooths = 2;
+	public int maximumNumberOfSmooths = 2;
 
 	
 	private int[][] neighbourTriangles;
@@ -16,20 +34,30 @@ public class Surface : MonoBehaviour {
 
 
 	public void Start() {
-		// -fault plane
+		// -faults
 		// -normals
-		// continents
+		// -craters
 		// "3D" texture
 		// height shader
 		// slope shader
 
 		findNeighbours();
 
-		for(int perturbCount = 0; perturbCount < perturbRepetitions; perturbCount++) {
-			perturb();
+		int numberOfCraters = Random.Range(minimumNumberOfCraters, maximumNumberOfCraters);
+
+		for(int craterNumber = 0; craterNumber < numberOfCraters; craterNumber++) {
+			crater();
 		}
 
-		for(int smoothCount = 0; smoothCount < smoothRepetitions; smoothCount++) {
+		int numberOfFaults = Random.Range(minimumNumberOfFaults, maximumNumberOfFaults);
+
+		for(int faultNumber = 0; faultNumber < numberOfFaults; faultNumber++) {
+			fault();
+		}
+
+		int numberOfSmooths = Random.Range(minimumNumberOfSmooths, maximumNumberOfSmooths);
+
+		for(int smoothNumber = 0; smoothNumber < numberOfSmooths; smoothNumber++) {
 			smooth();
 		}
 
@@ -38,15 +66,19 @@ public class Surface : MonoBehaviour {
 
 
 	public void Update() {
+		if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
+			crater();
+		}
+
 		if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
-			perturb();
+			fault();
 		}
 
 		if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
 			smooth();
 		}
 
-		if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
+		if(Input.GetKeyDown(KeyCode.KeypadPeriod)) {
 			calculateNormals();
 		}
 	}
@@ -170,7 +202,47 @@ public class Surface : MonoBehaviour {
 	}
 
 
-	private void perturb() {
+	private void crater() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+
+		Vector3[] vertices = mesh.vertices;
+		
+		Vector3 craterNormal = Random.onUnitSphere;
+
+		float radius = Random.Range(minimumCraterRadius, maximumCraterRadius);
+		float scale = Random.Range(minimumCraterScale, maximumCraterScale);
+		
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			Vector3 vertex = vertices[vertexIndex];
+
+			// Calculate the distance from the vertex to the cylinder intersecting the crater.
+			float dot = Vector3.Dot(craterNormal, vertex);
+			Vector3 projection = dot * craterNormal;
+			Vector3 radial = vertex - projection;
+
+			float length = radial.magnitude;
+			bool ahead = dot > 0.0f;
+			bool inside = length < radius;
+			
+			float sign = ahead && inside ? 1 : -1;
+			float signedScale = Mathf.Pow(scale, sign);
+
+			float distance = ahead ? Mathf.Abs(radius - length) : maximumCraterDistance;
+			float clampedDistance = Mathf.Clamp(distance, minimumCraterDistance, maximumCraterDistance);
+
+			float interpolation = (clampedDistance - minimumCraterDistance) / (maximumCraterDistance - minimumCraterDistance);
+			float interpolatedScale = signedScale + (1.0f - interpolation) * (1.0f - signedScale);
+
+			vertex *= interpolatedScale;
+			
+			vertices[vertexIndex] = vertex;
+		}
+
+		mesh.vertices = vertices;
+	}
+
+	private void fault() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 
@@ -179,7 +251,7 @@ public class Surface : MonoBehaviour {
 		Vector3 faultPlaneNormal = Random.onUnitSphere;
 		Plane faultPlane = new Plane(faultPlaneNormal, 0.0f);
 
-		float scale = Random.Range(minimumScale, maximumScale);
+		float scale = Random.Range(minimumFaultScale, maximumFaultScale);
 
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
@@ -188,9 +260,9 @@ public class Surface : MonoBehaviour {
 			float signedScale = Mathf.Pow(scale, sign);
 
 			float distance = Mathf.Abs(faultPlane.GetDistanceToPoint(vertex));
-			float clampedDistance = Mathf.Clamp(distance, minimumDistance, maximumDistance);
+			float clampedDistance = Mathf.Clamp(distance, minimumFaultDistance, maximumFaultDistance);
 
-			float interpolation = (clampedDistance - minimumDistance) / (maximumDistance - minimumDistance);
+			float interpolation = (clampedDistance - minimumFaultDistance) / (maximumFaultDistance - minimumFaultDistance);
 			float interpolatedScale = signedScale + (1.0f - interpolation) * (1.0f - signedScale);
 
 			vertex *= interpolatedScale;
