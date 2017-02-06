@@ -1,32 +1,37 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class DraggingInteraction : MonoBehaviour {
+public class DraggingInteraction : MonoBehaviour
+{
     public Transform camps;
 
     private CampScript selectedCamp = null;
     private Transform selectedArrow = null;
     private Vector3 dragStart = Vector3.zero;
 
-	// Use this for initialization
-	void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    // Use this for initialization
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
         if (Input.GetButtonDown("Fire1"))
         {
             //do raycast
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if(Physics.Raycast(ray, out hit, Camera.main.transform.position.magnitude + 0.5f)) {
+            if (Physics.Raycast(ray, out hit, Camera.main.transform.position.magnitude + 0.5f))
+            {
                 //Transform objectHit = hit.transform;
                 dragStart = hit.point;
                 //find closest base
                 Transform best = camps.GetChild(0);
                 float bestDist = Vector3.Distance(dragStart, best.position);
-                foreach(Transform camp in camps) {
+                foreach (Transform camp in camps)
+                {
                     if (!camp.gameObject.activeInHierarchy)
                         continue;
 
@@ -48,7 +53,8 @@ public class DraggingInteraction : MonoBehaviour {
             //do raycast
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if(Physics.Raycast(ray, out hit, Camera.main.transform.position.magnitude + 0.5f)) {
+            if (Physics.Raycast(ray, out hit, Camera.main.transform.position.magnitude + 0.5f))
+            {
                 Vector3 dragEnd = hit.point;
                 Debug.DrawLine(dragStart, dragEnd);
 
@@ -96,6 +102,7 @@ public class DraggingInteraction : MonoBehaviour {
                     {
                         campAngle = -AngleSigned(neigh.transform.position - Vector3.Project(neigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
                         float diff = Mathf.Abs(campAngle - angle);
+                        diff = Mathf.Min(diff, 360 - diff);
                         if (diff < bestAngle)
                         {
                             bestNeigh = neigh;
@@ -115,7 +122,7 @@ public class DraggingInteraction : MonoBehaviour {
                 selectedArrow.gameObject.SetActive(false);
             }
         }
-	}
+    }
 
     public static float AngleSigned(Vector3 v1, Vector3 v2, Vector3 n)
     {
