@@ -33,17 +33,11 @@ public class Surface : MonoBehaviour {
 	private int[][] neighbourVertices;
 
 
-	public void Start() {
-		// -faults
-		// -normals
-		// -craters
-		// -"3D" texture
-		// height shader
-		// slope shader
-		// exaggeration
-
+	public void initialize() {
 		findNeighbours();
+	}
 
+	public void generate() {
 		int numberOfCraters = Random.Range(minimumNumberOfCraters, maximumNumberOfCraters);
 
 		for(int craterNumber = 0; craterNumber < numberOfCraters; craterNumber++) {
@@ -65,23 +59,8 @@ public class Surface : MonoBehaviour {
 		calculateNormals();
 	}
 
+	public void updateMaterial() {
 
-	public void Update() {
-		if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
-			crater();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
-			fault();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
-			smooth();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadPeriod)) {
-			calculateNormals();
-		}
 	}
 
 
@@ -203,7 +182,7 @@ public class Surface : MonoBehaviour {
 	}
 
 
-	private void crater() {
+	public void crater() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 
@@ -243,7 +222,7 @@ public class Surface : MonoBehaviour {
 		mesh.vertices = vertices;
 	}
 
-	private void fault() {
+	public void fault() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 
@@ -274,7 +253,7 @@ public class Surface : MonoBehaviour {
 		mesh.vertices = vertices;
 	}
 
-	private void smooth() {
+	public void smooth() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 
@@ -302,7 +281,7 @@ public class Surface : MonoBehaviour {
 	}
 
 
-	private void calculateNormals() {
+	public void calculateNormals() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 		
