@@ -8,12 +8,10 @@ public class Water : MonoBehaviour {
 
 	public float step = 0.001f;
 
-
-
+	
 	public void Start() {
-		// -water
-		// water shader
-		// depth shader
+		// Enable the depth texture so we can do depth shading.
+		Camera.main.depthTextureMode = DepthTextureMode.Depth;
 
 		level = Random.Range(minimumLevel, maximumLevel);
 

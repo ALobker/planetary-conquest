@@ -37,9 +37,10 @@ public class Surface : MonoBehaviour {
 		// -faults
 		// -normals
 		// -craters
-		// "3D" texture
+		// -"3D" texture
 		// height shader
 		// slope shader
+		// exaggeration
 
 		findNeighbours();
 
