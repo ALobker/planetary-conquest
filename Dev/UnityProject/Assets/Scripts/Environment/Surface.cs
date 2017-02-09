@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 
 public class Surface : MonoBehaviour {
+	public Planet planet;
+
 	[Header("Crater")]
 	public int minimumNumberOfCraters = 100;
 	public int maximumNumberOfCraters = 100;
@@ -32,9 +34,19 @@ public class Surface : MonoBehaviour {
 	private int[][] neighbourTriangles;
 	private int[][] neighbourVertices;
 
+	private float average;
+
+
+	public float Average {
+		get {
+			return average;
+		}
+	}
+
 
 	public void initialize() {
 		findNeighbours();
+		calculateAverage();
 	}
 
 	public void generate() {
@@ -57,6 +69,7 @@ public class Surface : MonoBehaviour {
 		}
 
 		calculateNormals();
+		calculateAverage();
 	}
 
 	public void updateMaterial() {
@@ -316,5 +329,21 @@ public class Surface : MonoBehaviour {
 		}
 
 		mesh.normals = normals;
+	}
+
+	public void calculateAverage() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+		
+		int[] triangles = mesh.triangles;
+		Vector3[] vertices = mesh.vertices;
+		
+		float total = 0.0f;
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			total += vertices[vertexIndex].magnitude;
+		}
+
+		average = total / vertices.Length;
 	}
 }

@@ -1,32 +1,31 @@
 ﻿using UnityEngine;
 
 public class Water : MonoBehaviour {
-	private float level = 1.0f;
+	public Planet planet;
 
+	[Header("Water")]
 	public float minimumLevel = 0.99f;
 	public float maximumLevel = 1.01f;
 
 	public float step = 0.001f;
 
-	
-	public void Start() {
+
+	private float level = 1.0f;
+
+
+	public void initialize() {
 		// Enable the depth texture so we can do depth shading.
 		Camera.main.depthTextureMode = DepthTextureMode.Depth;
+	}
 
+	public void generate() {
 		level = Random.Range(minimumLevel, maximumLevel);
 
 		updateLevel();
 	}
 
+	public void updateMaterial() {
 
-	public void Update() {
-		if(Input.GetKeyDown(KeyCode.Equals)) {
-			increaseLevel();
-		}
-
-		if(Input.GetKeyDown(KeyCode.Minus)) {
-			decreaseLevel();
-		}
 	}
 
 
