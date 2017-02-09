@@ -35,21 +35,14 @@ public class CampScript : MonoBehaviour
         arrow.gameObject.SetActive(false);
         progress.GetComponent<Renderer>().material.SetFloat("_Cutoff", Mathf.Clamp(campHealth, 0.05f, 1f));
 
-        Color c = Color.white;
-        switch (faction)
-        {
-            case 1: c = Color.cyan; break;
-            case 2: c = Color.magenta; break;
-            case 3: c = Color.yellow; break;
-            case 4: c = Color.blue; break;
-            case 5: c = Color.red; break;
-        }
-        gameObject.GetComponent<Renderer>().material.color = c;
+        gameObject.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.gameState != GameManager.State.Playing)
+            return;
         if (faction == 0) //neutral base
         {
             //do nothing
@@ -102,16 +95,7 @@ public class CampScript : MonoBehaviour
             deploymentTimer %= 1f;
         }
 
-        Color c = Color.white;
-        switch (armyFaction)
-        {
-            case 1: c = Color.cyan; break;
-            case 2: c = Color.magenta; break;
-            case 3: c = Color.yellow; break;
-            case 4: c = Color.blue; break;
-            case 5: c = Color.red; break;
-        }
-        text.GetComponent<Renderer>().material.color = c;
+        text.GetComponent<Renderer>().material.color = GameManager.playerColors[armyFaction];
         text.text = "" + Mathf.FloorToInt(numUnits);
     }
 
@@ -136,16 +120,7 @@ public class CampScript : MonoBehaviour
         selectedNeighbour = null;
         arrow.gameObject.SetActive(false);
 
-        Color c = Color.white;
-        switch (faction)
-        {
-            case 1: c = Color.cyan; break;
-            case 2: c = Color.magenta; break;
-            case 3: c = Color.yellow; break;
-            case 4: c = Color.blue; break;
-            case 5: c = Color.red; break;
-        }
-        gameObject.GetComponent<Renderer>().material.color = c;
+        gameObject.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
 
         deploymentTimer = 0;
     }

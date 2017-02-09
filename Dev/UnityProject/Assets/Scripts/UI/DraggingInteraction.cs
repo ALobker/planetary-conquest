@@ -18,6 +18,11 @@ public class DraggingInteraction : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.gameState != GameManager.State.Playing)
+            return;
+        if (camps.childCount == 0)
+            return;
+
         if (Input.GetButtonDown("Fire1"))
         {
             //do raycast
@@ -44,12 +49,25 @@ public class DraggingInteraction : MonoBehaviour
                 }
                 dragStart = best.position;
                 selectedCamp = best.GetComponent<CampScript>();
+
+                //do not allow dragging if not player faction
+                if (selectedCamp.faction != 1)
+                {
+                    dragStart = Vector3.zero;
+                    selectedCamp = null;
+                    return;
+                }
+
                 selectedArrow = selectedCamp.arrow;
                 selectedArrow.gameObject.SetActive(true);
             }
         }
         if (Input.GetButton("Fire1"))
         {
+            //no dragging if no camp selected
+            if (dragStart == Vector3.zero)
+                return;
+
             //do raycast
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -74,9 +92,10 @@ public class DraggingInteraction : MonoBehaviour
         }
         if (Input.GetButtonUp("Fire1"))
         {
-            //set arrow
+            //no dragging if no camp selected
+            if (dragStart == Vector3.zero)
+                return;
 
-            //select intended neighbour
             //do raycast
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -86,6 +105,7 @@ public class DraggingInteraction : MonoBehaviour
 
                 if (Vector3.Distance(dragStart, dragEnd) < 1f || selectedCamp.neighbours.Length == 0)
                 {
+                    //do not select a camp
                     selectedCamp.selectedNeighbour = null;
                     selectedArrow.gameObject.SetActive(false);
                 }
@@ -98,6 +118,7 @@ public class DraggingInteraction : MonoBehaviour
                     CampScript bestNeigh = neighs[0];
                     float campAngle = -AngleSigned(bestNeigh.transform.position - Vector3.Project(bestNeigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
                     float bestAngle = Mathf.Abs(campAngle - angle);
+                    //select intended neighbour
                     foreach (CampScript neigh in neighs)
                     {
                         campAngle = -AngleSigned(neigh.transform.position - Vector3.Project(neigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);

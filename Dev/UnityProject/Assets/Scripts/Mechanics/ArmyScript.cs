@@ -13,21 +13,14 @@ public class ArmyScript : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        Color c = Color.white;
-        switch (faction)
-        {
-            case 1: c = Color.cyan; break;
-            case 2: c = Color.magenta; break;
-            case 3: c = Color.yellow; break;
-            case 4: c = Color.blue; break;
-            case 5: c = Color.red; break;
-        }
-        gameObject.GetComponent<Renderer>().material.color = c;
+        gameObject.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.gameState != GameManager.State.Playing)
+            return;
         progress += Time.deltaTime * speed;
         if (progress < 1f)
             transform.position = Vector3.Slerp(from.transform.position, to.transform.position, progress);

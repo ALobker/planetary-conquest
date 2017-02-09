@@ -51,6 +51,25 @@ public class CreateCamps : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        //CreateAllCamps();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (GameManager.gameState != GameManager.State.Playing)
+            return;
+        if (drawFrom == null)
+            return;
+
+        for (int i = 0; i < drawFrom.Count; i++)
+        {
+            Debug.DrawLine(drawFrom[i], drawTo[i], Color.white);
+        }
+    }
+
+    public void CreateAllCamps()
+    {
         List<Vector3> points = new List<Vector3>(numCamps);
         List<int[]> neighbours = new List<int[]>(numCamps);
 
@@ -120,8 +139,8 @@ public class CreateCamps : MonoBehaviour
         }
         else
         {
-            points = generateSpherePoints(numCamps);
-            neighbours = findNeighbours(points);
+            points = GenerateSpherePoints(numCamps);
+            neighbours = FindNeighbours(points);
             Debug.Log("Numpoints " + points.Count + ", neighs: " + neighbours.Count);
         }
 
@@ -139,13 +158,10 @@ public class CreateCamps : MonoBehaviour
             CampScript cs = newCamp.GetComponent<CampScript>();
             cs.armyParent = armyParent;
             cs.armyPrefab = armyPrefab;
-            cs.faction = UnityEngine.Random.Range(0, 4);
+            cs.faction = 0; // UnityEngine.Random.Range(0, 4);
 
-            if (cs.faction > 0)
-            {
-                HiveAI ai = newCamp.AddComponent<HiveAI>();
-                ai.camp = cs;
-            }
+            HiveAI ai = newCamp.AddComponent<HiveAI>();
+            ai.camp = cs;
 
             camps.Add(cs);
         }
@@ -160,26 +176,46 @@ public class CreateCamps : MonoBehaviour
             }
         }
 
+        //select a few bases as starting positions
+        //create an array and shuffle it
+        int[] indexes = Enumerable.Range(0, camps.Count).OrderBy(x => UnityEngine.Random.Range(0, 1f)).ToArray();
+        for (int i = 0; i < GameManager.numPlayers; i++)
+        {
+            camps[indexes[i]].faction = i + 1;
+        }
+
         drawFrom = new List<Vector3>();
         drawTo = new List<Vector3>();
-        //drawConnections(camps);
-        //drawBorders(camps);
-        drawBordersAlternative(camps);
+        //DrawConnections(camps);
+        //DrawBorders(camps);
+        DrawBordersAlternative(camps);
+
+        //set camera for player
+        Vector3 cameraPos = camps[indexes[0]].transform.position.normalized * 20f;
+        Camera.main.transform.position = cameraPos;
+        Camera.main.transform.LookAt(Vector3.zero, Vector3.up);
+        OrbitCamera orb = Camera.main.GetComponent<OrbitCamera>();
+        orb.SetRotation(Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.x);
     }
 
-    // Update is called once per frame
-    void Update()
+    public void RemoveAllCamps()
     {
-        for (int i = 0; i < drawFrom.Count; i++)
+        DestroyAllChildren(campParent);
+        DestroyAllChildren(armyParent);
+    }
+
+    private void DestroyAllChildren(Transform parent)
+    {
+        for (int i = parent.childCount - 1; i >= 0; i--)
         {
-            Debug.DrawLine(drawFrom[i], drawTo[i], Color.white);
+            Destroy(parent.GetChild(i).gameObject);
         }
     }
 
-    private List<Vector3> generateSpherePoints(int numPoints)
+    private List<Vector3> GenerateSpherePoints(int approxNumPoints)
     {
         // https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf
-        List<Vector3> points = new List<Vector3>(numPoints);
+        List<Vector3> points = new List<Vector3>(approxNumPoints);
         /*
         // bad method, not regular
         for (int i = 0; i < numPoints; i++)
@@ -191,7 +227,7 @@ public class CreateCamps : MonoBehaviour
         }
         */
 
-        float a = (4f * Mathf.PI) / numPoints;
+        float a = (4f * Mathf.PI) / approxNumPoints;
         float d = Mathf.Sqrt(a);
         float mv = Mathf.Round(Mathf.PI / d);
         float dv = Mathf.PI / mv;
@@ -204,19 +240,19 @@ public class CreateCamps : MonoBehaviour
             for (int n = 0; n < mp; n++)
             {
                 float phi = 2 * Mathf.PI * n / mp;
-                points.Add(createPoint(theta, phi));
+                points.Add(CreatePoint(theta, phi));
             }
         }
         return points;
     }
 
     // theta 0-pi, phi 0-2pi
-    private Vector3 createPoint(float theta, float phi)
+    private Vector3 CreatePoint(float theta, float phi)
     {
         return new Vector3(Mathf.Sin(theta) * Mathf.Cos(phi), Mathf.Sin(theta) * Mathf.Sin(phi), Mathf.Cos(theta));
     }
 
-    private List<int[]> findNeighbours(List<Vector3> points)
+    private List<int[]> FindNeighbours(List<Vector3> points)
     {
         List<int[]> neighbours = new List<int[]>(numCamps);
 
@@ -228,7 +264,7 @@ public class CreateCamps : MonoBehaviour
                 if (i == j)
                     continue;
                 float dist = Vector3.Distance(points[i], points[j]);
-                if(dist > 0.001f)
+                if (dist > 0.001f)
                     distances.Add(j, dist);
             }
 
@@ -243,7 +279,7 @@ public class CreateCamps : MonoBehaviour
         return neighbours;
     }
 
-    private void drawBorders(List<CampScript> camps)
+    private void DrawBorders(List<CampScript> camps)
     {
         List<Vector3> segmentA = new List<Vector3>(), segmentB = new List<Vector3>(), segmentMid = new List<Vector3>();
 
@@ -322,12 +358,12 @@ public class CreateCamps : MonoBehaviour
             foreach (KeyValuePair<Vector3, float> edge in best4)
             {
                 if (edge.Value - bestDist < 0.01f)
-                    drawLine(intersections[i], edge.Key);
+                    DrawLine(intersections[i], edge.Key);
             }
         }
     }
 
-    private void drawBordersAlternative(List<CampScript> camps)
+    private void DrawBordersAlternative(List<CampScript> camps)
     {
         //find all intersections between points
         foreach (CampScript camp in camps)
@@ -421,23 +457,23 @@ public class CreateCamps : MonoBehaviour
             List<KeyValuePair<Tuple<Vector3, Vector3>, float>> best4 = distances.OrderBy(pair => pair.Value).Take(4).ToList();
             foreach (KeyValuePair<Tuple<Vector3, Vector3>, float> edge in best4)
             {
-                drawLine(edge.Key.First, edge.Key.Second);
+                DrawLine(edge.Key.First, edge.Key.Second);
             }
         }
     }
 
-    private void drawConnections(List<CampScript> camps)
+    private void DrawConnections(List<CampScript> camps)
     {
         foreach (CampScript camp in camps)
         {
             foreach (CampScript neigh in camp.neighbours)
             {
-                drawLine(camp.transform.position, neigh.transform.position);
+                DrawLine(camp.transform.position, neigh.transform.position);
             }
         }
     }
 
-    private void drawLine(Vector3 p1, Vector3 p2)
+    private void DrawLine(Vector3 p1, Vector3 p2)
     {
         float dist = Vector3.Distance(p1, p2);
         int numSegs = Mathf.CeilToInt(dist / 1f);

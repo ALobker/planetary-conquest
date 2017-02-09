@@ -29,6 +29,8 @@ public class HiveAI : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (GameManager.gameState != GameManager.State.Playing)
+            return;
         actionTimer += Time.deltaTime;
         if (actionTimer >= 1f)
         {
@@ -40,6 +42,8 @@ public class HiveAI : MonoBehaviour
     // determine which neighbour should be approached
     private void setArrow()
     {
+        if (camp.faction == 0 || camp.faction == 1) //no ai for neutral or player
+            return;
         if (camp.faction != camp.armyFaction || camp.numUnits < 5f)
         {
             camp.selectedNeighbour = null;
@@ -92,7 +96,7 @@ public class HiveAI : MonoBehaviour
                 likelihoods[i] = likelihood;
                 totallikelihoods += likelihood;
             }
-            Debug.Log("Likelihoods: " + likelihoods[0] + " | " + likelihoods[1] + " | " + likelihoods[2] + " | " + likelihoods[3]);
+            //Debug.Log("Likelihoods: " + likelihoods[0] + " | " + likelihoods[1] + " | " + likelihoods[2] + " | " + likelihoods[3]);
 
             //normalize likelihood
             for (int i = 0; i < likelihoods.Length; i++)

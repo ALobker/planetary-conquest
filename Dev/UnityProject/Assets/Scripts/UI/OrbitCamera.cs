@@ -72,7 +72,7 @@ public class OrbitCamera : MonoBehaviour
      * Rotate the camera when the first button of the mouse is pressed.
      * 
      */
-    void RotateControls()
+    private void RotateControls()
     {
         if (Input.GetButton("Fire2"))
         {
@@ -88,7 +88,7 @@ public class OrbitCamera : MonoBehaviour
      * Transform the cursor mouvement in rotation and in a new position
      * for the camera.
      */
-    void Rotate(float x, float y)
+    private void Rotate(float x, float y)
     {
         //Transform angle in degree in quaternion form used by Unity for rotation.
         Quaternion rotation = Quaternion.Euler(y, x, 0.0f);
@@ -105,7 +105,7 @@ public class OrbitCamera : MonoBehaviour
     /**
      * Zoom or dezoom depending on the input of the mouse wheel.
      */
-    void Zoom()
+    private void Zoom()
     {
         if (Input.GetAxis("Mouse ScrollWheel") < 0.0f)
         {
@@ -121,7 +121,7 @@ public class OrbitCamera : MonoBehaviour
      * Reduce the distance from the camera to the target and
      * update the position of the camera (with the Rotate function).
      */
-    void ZoomIn()
+    private void ZoomIn()
     {
         _distance -= _zoomStep;
         _distance = Mathf.Clamp(_distance, 2f, 5000f);
@@ -133,11 +133,18 @@ public class OrbitCamera : MonoBehaviour
      * Increase the distance from the camera to the target and
      * update the position of the camera (with the Rotate function).
      */
-    void ZoomOut()
+    private void ZoomOut()
     {
         _distance += _zoomStep;
         _distance = Mathf.Clamp(_distance, 2f, 5000f);
         _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
         this.Rotate(_x, _y);
     }
-} //End class
+
+    public void SetRotation(float x, float y) {
+        _x = x;
+        _y = y;
+
+        Rotate(_x, _y);
+    }
+}
