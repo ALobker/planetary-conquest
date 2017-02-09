@@ -5,66 +5,104 @@ public class Planet : MonoBehaviour {
 	public Water water;
 	public Atmosphere atmosphere;
 
+	[Header("Features")]
+	public bool featuresWater = false;
+	public bool featuresAtmosphere = false;
+
 	[Header("Generation")]
-	public bool generate;
+	public bool generateSurface = true;
+	public bool generateWater = true;
+	public bool generateAtmosphere = true;
 
 
 	private void Start() {
 		// height shader
 		// slope shader
 		// atmosphere + atmospheric haze
-		// adapt water level to average surface height
 		// exaggeration from average surface height (minimim, maximum)
 		// make water level available in surface shader through updateMaterial() + water level property
-		// script-based scale (minimum, maximum) + hard scale water & atmosphere vertices
 		// script parameterization of materials (minimum, maximum, etc.)
 		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting?) + water depth (bluer/darker when deeper)
 		// random texture selection
 		// take generated values and send them to shaders in updateMaterial() + generated values as properties
 		// make script and shaders origin (or world space?) independent
 		// moon and asteroid prefabs
-
+		
+		// Perform initialization.
 		surface.initialize();
-		water.initialize();
-		atmosphere.initialize();
 
-		if(generate) {
+		if(featuresWater) {
+			water.initialize();
+		}
+
+		if(featuresAtmosphere) {
+			atmosphere.initialize();
+		}
+
+		// Perform generation if requested.
+		if(generateSurface) {
 			surface.generate();
-			water.generate();
-			atmosphere.generate();
+		}
 
+		if(featuresWater && generateWater) {
+			water.generate();
+		}
+
+		if(featuresAtmosphere && generateAtmosphere) {
+			atmosphere.generate();
+		}
+
+		// Update the materials if generation took place.
+		if(generateSurface) {
 			surface.updateMaterial();
+		}
+
+		if(featuresWater && generateWater) {
 			water.updateMaterial();
+		}
+
+		if(featuresAtmosphere && generateAtmosphere) {
 			atmosphere.updateMaterial();
 		}
 	}
 
 
 	private void Update() {
+		// Generation controls.
 		if(Input.GetKeyDown(KeyCode.H)) {
 			surface.generate();
 		}
 
 		if(Input.GetKeyDown(KeyCode.J)) {
-			water.generate();
+			if(featuresWater) {
+				water.generate();
+			}
 		}
 
 		if(Input.GetKeyDown(KeyCode.K)) {
-			atmosphere.generate();
+			if(featuresAtmosphere) {
+				atmosphere.generate();
+			}
 		}
 
+		// Update material controls.
 		if(Input.GetKeyDown(KeyCode.B)) {
 			surface.updateMaterial();
 		}
 
 		if(Input.GetKeyDown(KeyCode.N)) {
-			water.updateMaterial();
+			if(featuresWater) {
+				water.updateMaterial();
+			}
 		}
 
 		if(Input.GetKeyDown(KeyCode.M)) {
-			atmosphere.updateMaterial();
+			if(featuresAtmosphere) {
+				atmosphere.updateMaterial();
+			}
 		}
 
+		// Individual surface generation controls.
 		if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
 			surface.crater();
 		}
@@ -85,12 +123,30 @@ public class Planet : MonoBehaviour {
 			surface.calculateAverage();
 		}
 
+		// Individual water generation controls.
 		if(Input.GetKeyDown(KeyCode.Equals)) {
-			water.increaseLevel();
+			if(featuresWater) {
+				water.increaseLevel();
+			}
 		}
 
 		if(Input.GetKeyDown(KeyCode.Minus)) {
-			water.decreaseLevel();
+			if(featuresWater) {
+				water.decreaseLevel();
+			}
+		}
+
+		// Individual atmosphere generation controls.
+		if(Input.GetKeyDown(KeyCode.LeftBracket)) {
+			if(featuresAtmosphere) {
+				atmosphere.increaseHeight();
+			}
+		}
+
+		if(Input.GetKeyDown(KeyCode.RightBracket)) {
+			if(featuresAtmosphere) {
+				atmosphere.decreaseHeight();
+			}
 		}
 	}
 }
