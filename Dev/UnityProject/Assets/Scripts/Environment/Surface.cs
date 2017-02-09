@@ -34,6 +34,15 @@ public class Surface : MonoBehaviour {
 	public int minimumNumberOfSmooths = 2;
 	public int maximumNumberOfSmooths = 2;
 
+	[Header("Exaggeration")]
+	public float minimumUnderExaggeration = 10.0f;
+	public float maximumUnderExaggeration = 10.0f;
+
+	public float minimumOverExaggeration = 10.0f;
+	public float maximumOverExaggeration = 10.0f;
+
+	public bool exaggerateBeforeSmooth = false;
+
 	
 	private int[][] neighbourTriangles;
 	private int[][] neighbourVertices;
@@ -57,21 +66,28 @@ public class Surface : MonoBehaviour {
 
 	public void generate() {
 		int numberOfCraters = Random.Range(minimumNumberOfCraters, maximumNumberOfCraters);
-
 		for(int craterNumber = 0; craterNumber < numberOfCraters; craterNumber++) {
 			crater();
 		}
 
 		int numberOfFaults = Random.Range(minimumNumberOfFaults, maximumNumberOfFaults);
-
 		for(int faultNumber = 0; faultNumber < numberOfFaults; faultNumber++) {
 			fault();
 		}
 
-		int numberOfSmooths = Random.Range(minimumNumberOfSmooths, maximumNumberOfSmooths);
+		if(exaggerateBeforeSmooth) {
+			calculateAverage();
+			exaggerate();
+		}
 
+		int numberOfSmooths = Random.Range(minimumNumberOfSmooths, maximumNumberOfSmooths);
 		for(int smoothNumber = 0; smoothNumber < numberOfSmooths; smoothNumber++) {
 			smooth();
+		}
+
+		if(!exaggerateBeforeSmooth) {
+			calculateAverage();
+			exaggerate();
 		}
 
 		calculateNormals();
@@ -317,6 +333,29 @@ public class Surface : MonoBehaviour {
 		}
 
 		mesh.vertices = smoothedVertices;
+	}
+
+	public void exaggerate() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+		
+		int[] triangles = mesh.triangles;
+		Vector3[] vertices = mesh.vertices;
+
+		float overExaggeration = Random.Range(minimumOverExaggeration, maximumOverExaggeration);
+		float underExaggeration = Random.Range(minimumUnderExaggeration, maximumUnderExaggeration);
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			Vector3 vertex = vertices[vertexIndex];
+			
+			float exaggeration = vertex.magnitude < average ? underExaggeration : overExaggeration;
+			float radius = average + exaggeration * (vertex.magnitude - average);
+			vertex = vertex.normalized * radius;
+
+			vertices[vertexIndex] = vertex;
+		}
+
+		mesh.vertices = vertices;
 	}
 
 
