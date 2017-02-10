@@ -19,7 +19,6 @@ public class Planet : MonoBehaviour {
 		// height shader
 		// slope shader
 		// atmosphere + atmospheric haze
-		// exaggeration from average surface height (minimim, maximum)
 		// make water level available in surface shader through updateMaterial() + water level property
 		// script parameterization of materials (minimum, maximum, etc.)
 		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting?) + water depth (bluer/darker when deeper)
@@ -109,6 +108,10 @@ public class Planet : MonoBehaviour {
 
 		if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
 			surface.fault();
+		}
+
+		if(Input.GetKeyDown(KeyCode.KeypadMultiply)) {
+			surface.exaggerate();
 		}
 
 		if(Input.GetKeyDown(KeyCode.KeypadEnter)) {

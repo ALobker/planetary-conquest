@@ -35,13 +35,11 @@ public class Surface : MonoBehaviour {
 	public int maximumNumberOfSmooths = 2;
 
 	[Header("Exaggeration")]
-	public float minimumUnderExaggeration = 10.0f;
-	public float maximumUnderExaggeration = 10.0f;
+	public float minimumUnderExaggeration = 2.0f;
+	public float maximumUnderExaggeration = 8.0f;
 
-	public float minimumOverExaggeration = 10.0f;
-	public float maximumOverExaggeration = 10.0f;
-
-	public bool exaggerateBeforeSmooth = false;
+	public float minimumOverExaggeration = 2.0f;
+	public float maximumOverExaggeration = 4.0f;
 
 	
 	private int[][] neighbourTriangles;
@@ -74,20 +72,13 @@ public class Surface : MonoBehaviour {
 		for(int faultNumber = 0; faultNumber < numberOfFaults; faultNumber++) {
 			fault();
 		}
-
-		if(exaggerateBeforeSmooth) {
-			calculateAverage();
-			exaggerate();
-		}
+		
+		calculateAverage();
+		exaggerate();
 
 		int numberOfSmooths = Random.Range(minimumNumberOfSmooths, maximumNumberOfSmooths);
 		for(int smoothNumber = 0; smoothNumber < numberOfSmooths; smoothNumber++) {
 			smooth();
-		}
-
-		if(!exaggerateBeforeSmooth) {
-			calculateAverage();
-			exaggerate();
 		}
 
 		calculateNormals();
@@ -341,9 +332,9 @@ public class Surface : MonoBehaviour {
 		
 		int[] triangles = mesh.triangles;
 		Vector3[] vertices = mesh.vertices;
-
-		float overExaggeration = Random.Range(minimumOverExaggeration, maximumOverExaggeration);
+		
 		float underExaggeration = Random.Range(minimumUnderExaggeration, maximumUnderExaggeration);
+		float overExaggeration = Random.Range(minimumOverExaggeration, maximumOverExaggeration);
 
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
