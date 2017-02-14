@@ -106,4 +106,10 @@ public class UIOverlay : MonoBehaviour {
         }
         defaultStyle.normal.textColor = Color.white;
     }
+
+    private void DrawEndgameUI()
+    {
+        //GUI.Label(new Rect(), "Player " + i + " was victorious");
+        GUI.Button(new Rect(), "Main Menu");
+    }
 }

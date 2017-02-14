@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public enum State { Menu, Playing, Post };
+    public enum State { Menu, Playing, End };
     public static State gameState = State.Menu;
 
     public static int numPlayers = 3;

@@ -140,7 +140,7 @@ public class CreateCamps : MonoBehaviour
         else
         {
             points = GenerateSpherePoints(numCamps);
-            neighbours = FindNeighbours(points);
+            neighbours = FindNeighboursBetter(points);
             Debug.Log("Numpoints " + points.Count + ", neighs: " + neighbours.Count);
         }
 
@@ -216,16 +216,6 @@ public class CreateCamps : MonoBehaviour
     {
         // https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf
         List<Vector3> points = new List<Vector3>(approxNumPoints);
-        /*
-        // bad method, not regular
-        for (int i = 0; i < numPoints; i++)
-        {
-            float z = Random.Range(-1f, 1f);
-            float phi = Random.Range(0f, Mathf.PI);
-            float x = Mathf.Sqrt(1 - z * z) * Mathf.Cos(phi);
-            float y = Mathf.Sqrt(1 - z * z) * Mathf.Sin(phi);
-        }
-        */
 
         float a = (4f * Mathf.PI) / approxNumPoints;
         float d = Mathf.Sqrt(a);
@@ -252,6 +242,7 @@ public class CreateCamps : MonoBehaviour
         return new Vector3(Mathf.Sin(theta) * Mathf.Cos(phi), Mathf.Sin(theta) * Mathf.Sin(phi), Mathf.Cos(theta));
     }
 
+    //TODO: find neighbours using delaunay
     private List<int[]> FindNeighbours(List<Vector3> points)
     {
         List<int[]> neighbours = new List<int[]>(numCamps);
@@ -276,6 +267,58 @@ public class CreateCamps : MonoBehaviour
             }
             neighbours.Add(neighs);
         }
+        return neighbours;
+    }
+
+    private List<int[]> FindNeighboursBetter(List<Vector3> points)
+    {
+        List<int[]> neighbours = new List<int[]>(numCamps);
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            Dictionary<int, float> distances = new Dictionary<int, float>();
+            for (int j = 0; j < points.Count; j++)
+            {
+                if (i == j)
+                    continue;
+                float dist = Vector3.Distance(points[i], points[j]);
+                if (dist > 0.001f)
+                    distances.Add(j, dist);
+            }
+
+            List<KeyValuePair<int, float>> best6 = distances.OrderBy(pair => pair.Value).Take(5).ToList();
+            /*
+            if (best6.Count > 5 && best6[5].Value / best6[3].Value > best6[3].Value / best6[1].Value)
+                best6.RemoveAt(5);
+            */
+            if (best6.Count > 4 && best6[4].Value / best6[2].Value > best6[2].Value / best6[1].Value)
+                best6.RemoveAt(4);
+
+            int[] neighs = new int[best6.Count];
+            for (int k = 0; k < best6.Count; k++)
+            {
+                neighs[k] = best6[k].Key;
+            }
+            neighbours.Add(neighs);
+        }
+
+        // reciprocate neighbour
+        for (int i = 0; i < points.Count; i++)
+        {
+            int[] neighs = neighbours[i];
+            foreach(int n in neighs) {
+                if (!neighbours[n].Contains(i))
+                {
+                    //create bigger array and add i as neighbour
+                    int[] ints = new int[neighbours[n].Length + 1];
+                    for (int j = 0; j < neighbours[n].Length; j++)
+                        ints[j] = neighbours[n][j];
+                    ints[neighbours[n].Length] = i;
+                    neighbours[n] = ints;
+                }
+            }
+        }
+
         return neighbours;
     }
 
@@ -379,7 +422,7 @@ public class CreateCamps : MonoBehaviour
                     {
                         //Debug.Log("intersect");
                         //tri-point found
-                        Vector3 mid = (camp.transform.position + neigh.transform.position + second.transform.position) / 3f;
+                        Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position);
                         mid = mid.normalized * 5.1f;
                         if (!intersections.Contains(mid))
                             intersections.Add(mid);
@@ -395,7 +438,7 @@ public class CreateCamps : MonoBehaviour
                             if (camp.neighbours.Contains(third) || third.neighbours.Contains(camp))
                             {
                                 //quad-point found
-                                Vector3 mid = (camp.transform.position + neigh.transform.position + second.transform.position + third.transform.position) / 4f;
+                                Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position, third.transform.position);
                                 mid = mid.normalized * 5.1f;
                                 if (!intersections.Contains(mid))
                                     intersections.Add(mid);
@@ -411,7 +454,7 @@ public class CreateCamps : MonoBehaviour
                                     if (camp.neighbours.Contains(fourth) || fourth.neighbours.Contains(camp))
                                     {
                                         //quin-point found
-                                        Vector3 mid = (camp.transform.position + neigh.transform.position + second.transform.position + third.transform.position + fourth.transform.position) / 5f;
+                                        Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position, third.transform.position, fourth.transform.position);
                                         mid = mid.normalized * 5.1f;
                                         if (!intersections.Contains(mid))
                                         {
@@ -454,8 +497,34 @@ public class CreateCamps : MonoBehaviour
             }
 
             //draw line around camp
-            List<KeyValuePair<Tuple<Vector3, Vector3>, float>> best4 = distances.OrderBy(pair => pair.Value).Take(4).ToList();
-            foreach (KeyValuePair<Tuple<Vector3, Vector3>, float> edge in best4)
+            List<KeyValuePair<Tuple<Vector3, Vector3>, float>> best5 = distances.OrderBy(pair => pair.Value).Take(5).ToList();
+            if (best5.Count > 4 && best5[4].Value / best5[3].Value > best5[3].Value / best5[1].Value)
+                best5.RemoveAt(4);
+
+            //remove lines through bases
+            for (int i = 0; i < best5.Count; i++)
+            {
+                Vector3 mid = (best5[i].Key.First + best5[i].Key.Second).normalized;
+                if (Vector3.Distance(camp.transform.position.normalized, mid) < 0.1f)
+                {
+                    best5.RemoveAt(i);
+                    i--;
+                }
+                else
+                {
+                    foreach (CampScript neigh in camp.neighbours)
+                    {
+                        if (Vector3.Distance(neigh.transform.position.normalized, mid) < 0.1f)
+                        {
+                            best5.RemoveAt(i);
+                            i--;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<Tuple<Vector3, Vector3>, float> edge in best5)
             {
                 DrawLine(edge.Key.First, edge.Key.Second);
             }
@@ -519,5 +588,53 @@ public class CreateCamps : MonoBehaviour
             intersection = Vector3.zero;
             return false;
         }
+    }
+
+    public static Vector3 GetCircleCenter(Vector3 p1, Vector3 p2, Vector3 p3)
+    {
+        // triangle "edges"
+        Vector3 t = p2 - p1;
+        Vector3 u = p3 - p1;
+        Vector3 v = p3 - p2;
+
+        // triangle normal
+        Vector3 w = Vector3.Cross(t, u);
+        float wsl = w.sqrMagnitude;
+        if (wsl < .000001f)
+            return (p1 + p2 + p3) / 3f; // area of the triangle is too small (you may additionally check the points for colinearity if you are paranoid)
+
+        // helpers
+        float iwsl2 = 1.0f / (2.0f * wsl);
+        float tt = Vector3.Dot(t, t);
+        float uu = Vector3.Dot(u, u);
+
+        // result circle
+        Vector3 circCenter = p1 + (u * tt * (Vector3.Dot(u, v)) - t * uu * (Vector3.Dot(t, v))) * iwsl2;
+        return circCenter;
+
+        //return (p1 + p2 + p3) / 3f;
+    }
+
+    public static Vector3 GetCircleCenter(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4)
+    {
+        //return (p1 + p2 + p3 + p4) / 4f;
+        Vector3 c1 = GetCircleCenter(p2, p3, p4);
+        Vector3 c2 = GetCircleCenter(p1, p3, p4);
+        Vector3 c3 = GetCircleCenter(p1, p2, p4);
+        Vector3 c4 = GetCircleCenter(p1, p2, p3);
+
+        return (c1 + c2 + c3 + c4) / 4f;
+    }
+
+    public static Vector3 GetCircleCenter(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector3 p5)
+    {
+        //return (p1 + p2 + p3 + p4 + p5) / 5f;
+        //approx
+        Vector3 c1 = GetCircleCenter(p1, p2, p3);
+        Vector3 c2 = GetCircleCenter(p3, p4, p5);
+        Vector3 c3 = GetCircleCenter(p1, p3, p5);
+        Vector3 c4 = GetCircleCenter(p2, p4, p5);
+
+        return (c1 + c2 + c3 + c4) / 4f;
     }
 }
