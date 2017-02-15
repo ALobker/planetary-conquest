@@ -24,7 +24,7 @@ public class Atmosphere : MonoBehaviour {
 	}
 
 	public void updateMaterial() {
-		// 2 * dot(view, radial) assuming mesh remains a sphere
+		
 	}
 
 
