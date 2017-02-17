@@ -13,6 +13,13 @@ public class Atmosphere : MonoBehaviour {
 	private float height = 1.0f;
 
 
+	public float Height {
+		get {
+			return height;
+		}
+	}
+
+
 	public void initialize() {
 		updateSize();
 	}
@@ -24,7 +31,10 @@ public class Atmosphere : MonoBehaviour {
 	}
 
 	public void updateMaterial() {
-		
+		MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+		Material material = meshRenderer.material;
+
+		material.SetFloat("SurfaceHeight", planet.surface.Average);
 	}
 
 

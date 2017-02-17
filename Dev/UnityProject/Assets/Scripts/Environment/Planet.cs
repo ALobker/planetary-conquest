@@ -18,12 +18,10 @@ public class Planet : MonoBehaviour {
 	private void Start() {
 		// height shader
 		// slope shader
-		// atmosphere + atmospheric haze + queue fiddling
-		// make water level available in surface shader through updateMaterial() + water level property
-		// script parameterization of materials (minimum, maximum, etc.)
+		// atmosphere + atmospheric haze + queue fiddling + height stuff in the shader updated through updateMaterial()
+		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
 		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting?) + water depth (bluer/darker when deeper)
 		// random texture selection
-		// take generated values and send them to shaders in updateMaterial() + generated values as properties
 		// moon and asteroid prefabs
 		
 		// Perform initialization.

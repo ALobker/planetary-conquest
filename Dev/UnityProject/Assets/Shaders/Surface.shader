@@ -1,8 +1,8 @@
 ﻿Shader "Planet/Surface" {
 	Properties {
 		[NoScaleOffset]
-		GrassTexture("Grass", 2D) = "white" {}
-		Scale("Scale", Float) = 1.0
+		GrassTexture("Grass Texture", 2D) = "white" {}
+		GrassScale("Grass Scale", Float) = 1.0
 	}
 	SubShader {
 		Tags { "RenderType" = "Opaque" }
@@ -13,8 +13,9 @@
 			#pragma target 3.0
 
 			sampler2D GrassTexture;
-			
-			float Scale;
+			float GrassScale;
+
+			float WaterLevel;
 
 			struct Input {
 				float3 position;
@@ -42,15 +43,15 @@
 				float weightYZ = angleYZ / angleSum;
 				float weightZX = angleZX / angleSum;
 
-				position /= Scale;
+				float3 grassCoordinates = position / GrassScale;
 
-				fixed3 color = 0.0f;
+				fixed3 grassColor = 0.0f;
 
-				color += tex2D(GrassTexture, position.xy) * weightXY;
-				color += tex2D(GrassTexture, position.yz) * weightYZ;
-				color += tex2D(GrassTexture, position.zx) * weightZX;
+				grassColor += tex2D(GrassTexture, grassCoordinates.xy) * weightXY;
+				grassColor += tex2D(GrassTexture, grassCoordinates.yz) * weightYZ;
+				grassColor += tex2D(GrassTexture, grassCoordinates.zx) * weightZX;
 
-				output.Albedo = color;
+				output.Albedo = grassColor;
 			}
 		ENDCG
 	}

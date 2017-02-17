@@ -13,6 +13,13 @@ public class Water : MonoBehaviour {
 	private float level = 1.0f;
 
 
+	public float Level {
+		get {
+			return level;
+		}
+	}
+
+
 	public void initialize() {
 		// Enable the depth texture so we can do depth shading.
 		Camera.main.depthTextureMode = DepthTextureMode.Depth;

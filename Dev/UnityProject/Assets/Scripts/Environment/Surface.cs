@@ -86,7 +86,10 @@ public class Surface : MonoBehaviour {
 	}
 
 	public void updateMaterial() {
+		MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+		Material material = meshRenderer.material;
 
+		material.SetFloat("WaterLevel", planet.water.Level);
 	}
 
 

@@ -1,8 +1,7 @@
 ﻿Shader "Planet/Atmosphere" {
 	Properties {
-		AirColor("Air", Color) = (1.0, 1.0, 1.0, 1.0)
+		AirColor("Color", Color) = (1.0, 1.0, 1.0, 1.0)
 		Density("Density", Float) = 1.0
-		Height("Height", Float) = 1.0
 		ScaleHeight("Scale Height", Float) = 1.0
 		MinimumTransparency("Minimum Transparency", Float) = 0.0
 		MaximumTransparency("Maximum Transparency", Float) = 1.0
@@ -17,11 +16,12 @@
 			
 			float4 AirColor;
 			float Density;
-			float Height;
 			float ScaleHeight;
 
 			float MinimumTransparency;
 			float MaximumTransparency;
+
+			float SurfaceHeight;
 
 			struct Input {
 				float3 position;
@@ -46,7 +46,9 @@
 				float3 lowestPoint = position + viewDirection * halfDistance;
 				float lowestHeight = length(lowestPoint);
 
-				float altitude = lowestHeight - Height;
+				float altitude = lowestHeight - SurfaceHeight;
+
+
 
 				float density = exp(-altitude / ScaleHeight);
 
