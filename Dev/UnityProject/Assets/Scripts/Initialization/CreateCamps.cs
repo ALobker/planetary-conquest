@@ -141,7 +141,7 @@ public class CreateCamps : MonoBehaviour
         {
             points = GenerateSpherePoints(numCamps);
             neighbours = FindNeighboursBetter(points);
-            Debug.Log("Numpoints " + points.Count + ", neighs: " + neighbours.Count);
+            //Debug.Log("Numpoints " + points.Count + ", neighs: " + neighbours.Count);
         }
 
         List<CampScript> camps = new List<CampScript>(points.Count);
@@ -443,26 +443,6 @@ public class CreateCamps : MonoBehaviour
                                 if (!intersections.Contains(mid))
                                     intersections.Add(mid);
                             }
-                            else
-                            {
-                                foreach (CampScript fourth in third.neighbours)
-                                {
-                                    if (camp == fourth || neigh == fourth || second == fourth)
-                                        continue;
-                                    if (neigh.neighbours.Contains(fourth) || fourth.neighbours.Contains(neigh) || second.neighbours.Contains(fourth) || fourth.neighbours.Contains(second))
-                                        continue;
-                                    if (camp.neighbours.Contains(fourth) || fourth.neighbours.Contains(camp))
-                                    {
-                                        //quin-point found
-                                        Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position, third.transform.position, fourth.transform.position);
-                                        mid = mid.normalized * 5.1f;
-                                        if (!intersections.Contains(mid))
-                                        {
-                                            intersections.Add(mid);
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -486,48 +466,15 @@ public class CreateCamps : MonoBehaviour
                 }
             }
 
-            //find the distances between all points
-            Dictionary<Tuple<Vector3, Vector3>, float> distances = new Dictionary<Tuple<Vector3, Vector3>, float>();
-            for (int i = 0; i < intersections.Count - 1; i++)
-            {
-                for (int j = i + 1; j < intersections.Count; j++)
-                {
-                    distances.Add(new Tuple<Vector3, Vector3>(intersections[i], intersections[j]), Vector3.Distance(intersections[i], intersections[j]));
-                }
-            }
+            //sort by angle
+            List<Vector3> sortedIntersections = intersections.OrderBy(point => -DraggingInteraction.AngleSigned(point - camp.transform.position, camp.transform.right, camp.transform.up)).ToList();
 
-            //draw line around camp
-            List<KeyValuePair<Tuple<Vector3, Vector3>, float>> best5 = distances.OrderBy(pair => pair.Value).Take(5).ToList();
-            if (best5.Count > 4 && best5[4].Value / best5[3].Value > best5[3].Value / best5[1].Value)
-                best5.RemoveAt(4);
-
-            //remove lines through bases
-            for (int i = 0; i < best5.Count; i++)
+            //connect all intersections (counter) clockwise
+            for (int i = 0; i < sortedIntersections.Count - 1; i++)
             {
-                Vector3 mid = (best5[i].Key.First + best5[i].Key.Second).normalized;
-                if (Vector3.Distance(camp.transform.position.normalized, mid) < 0.1f)
-                {
-                    best5.RemoveAt(i);
-                    i--;
-                }
-                else
-                {
-                    foreach (CampScript neigh in camp.neighbours)
-                    {
-                        if (Vector3.Distance(neigh.transform.position.normalized, mid) < 0.1f)
-                        {
-                            best5.RemoveAt(i);
-                            i--;
-                            break;
-                        }
-                    }
-                }
+                DrawLine(sortedIntersections[i], sortedIntersections[i + 1]);
             }
-
-            foreach (KeyValuePair<Tuple<Vector3, Vector3>, float> edge in best5)
-            {
-                DrawLine(edge.Key.First, edge.Key.Second);
-            }
+            DrawLine(sortedIntersections[sortedIntersections.Count - 1], sortedIntersections[0]);
         }
     }
 
@@ -601,7 +548,7 @@ public class CreateCamps : MonoBehaviour
         Vector3 w = Vector3.Cross(t, u);
         float wsl = w.sqrMagnitude;
         if (wsl < .000001f)
-            return (p1 + p2 + p3) / 3f; // area of the triangle is too small (you may additionally check the points for colinearity if you are paranoid)
+            return (p1 + p2 + p3) / 3f; // area of the triangle is too small
 
         // helpers
         float iwsl2 = 1.0f / (2.0f * wsl);
@@ -622,18 +569,6 @@ public class CreateCamps : MonoBehaviour
         Vector3 c2 = GetCircleCenter(p1, p3, p4);
         Vector3 c3 = GetCircleCenter(p1, p2, p4);
         Vector3 c4 = GetCircleCenter(p1, p2, p3);
-
-        return (c1 + c2 + c3 + c4) / 4f;
-    }
-
-    public static Vector3 GetCircleCenter(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector3 p5)
-    {
-        //return (p1 + p2 + p3 + p4 + p5) / 5f;
-        //approx
-        Vector3 c1 = GetCircleCenter(p1, p2, p3);
-        Vector3 c2 = GetCircleCenter(p3, p4, p5);
-        Vector3 c3 = GetCircleCenter(p1, p3, p5);
-        Vector3 c4 = GetCircleCenter(p2, p4, p5);
 
         return (c1 + c2 + c3 + c4) / 4f;
     }
