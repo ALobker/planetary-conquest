@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public enum State { Menu, Playing, End };
-    public static State gameState = State.Menu;
+    public enum State { MainMenu, SinglePlayerMenu, MultiPlayerMenu, OptionsMenu, CreditsMenu, Playing, End };
+    public static State gameState = State.MainMenu;
 
     public static int numPlayers = 3;
     public static Color[] playerColors = { Color.white, Color.cyan, Color.magenta, Color.yellow, Color.blue, Color.red, Color.green, Color.gray };

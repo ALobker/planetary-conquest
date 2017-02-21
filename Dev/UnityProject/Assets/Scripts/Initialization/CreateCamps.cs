@@ -158,7 +158,7 @@ public class CreateCamps : MonoBehaviour
             CampScript cs = newCamp.GetComponent<CampScript>();
             cs.armyParent = armyParent;
             cs.armyPrefab = armyPrefab;
-            cs.faction = 0; // UnityEngine.Random.Range(0, 4);
+            cs.faction = 0;
 
             HiveAI ai = newCamp.AddComponent<HiveAI>();
             ai.camp = cs;

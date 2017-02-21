@@ -141,9 +141,13 @@ public class OrbitCamera : MonoBehaviour
         this.Rotate(_x, _y);
     }
 
-    public void SetRotation(float x, float y) {
+    public void SetRotation(float x, float y)
+    {
         _x = x;
         _y = y;
+
+        if (_y < -180) _y += 360;
+        if (_y > 180) _y -= 360;
 
         Rotate(_x, _y);
     }
