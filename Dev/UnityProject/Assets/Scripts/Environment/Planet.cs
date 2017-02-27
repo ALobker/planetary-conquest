@@ -18,7 +18,7 @@ public class Planet : MonoBehaviour {
 	private void Start() {
 		// height shader
 		// slope shader
-		// atmosphere + atmospheric haze + queue fiddling + height stuff in the shader updated through updateMaterial()
+		// atmosphere + atmospheric haze + queue fiddling
 		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
 		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting?) + water depth (bluer/darker when deeper)
 		// random texture selection
