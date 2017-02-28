@@ -69,19 +69,16 @@ public class UIOverlay : MonoBehaviour {
     private void DrawCreationMenu()
     {
         int buttonHeight = 35;
-        int offsetX = Screen.width / 2 - 250;
+        int offsetX = (Screen.width-600) / 2;
         int playersY = Screen.height / 2 - buttonHeight - 10;
         int campsY = Screen.height / 2 + 10;
 
         GUI.Label(new Rect(offsetX, playersY, 100, buttonHeight), "Players");
-        if (GUI.Toggle(new Rect(offsetX + 100, playersY, 70, buttonHeight), selectedPlayers == 2, "2"))
-            selectedPlayers = 2;
-        if (GUI.Toggle(new Rect(offsetX + 200, playersY, 70, buttonHeight), selectedPlayers == 3, "3"))
-            selectedPlayers = 3;
-        if (GUI.Toggle(new Rect(offsetX + 300, playersY, 70, buttonHeight), selectedPlayers == 4, "4"))
-            selectedPlayers = 4;
-        if (GUI.Toggle(new Rect(offsetX + 400, playersY, 70, buttonHeight), selectedPlayers == 5, "5"))
-            selectedPlayers = 5;
+        for (int i = 2; i <= 10; i++)
+        {
+            if (GUI.Toggle(new Rect(offsetX + 50*i, playersY, 70, buttonHeight), selectedPlayers == i, ""+i))
+                selectedPlayers = i;
+        }
         GameManager.numPlayers = selectedPlayers;
 
         GUI.Label(new Rect(offsetX, campsY, 100, buttonHeight), "Camps");
@@ -105,6 +102,11 @@ public class UIOverlay : MonoBehaviour {
             selectedSize = 3;
             cc.numCamps = 50;
         }
+        if (GUI.Toggle(new Rect(offsetX + 500, campsY, 100, buttonHeight), selectedSize == 4, "Giant"))
+        {
+            selectedSize = 4;
+            cc.numCamps = 80;
+        }
 
         if (GUI.Button(new Rect((Screen.width - 200) / 2, campsY + buttonHeight + 10, 200, buttonHeight), "Start"))
         {
@@ -112,6 +114,19 @@ public class UIOverlay : MonoBehaviour {
             GameManager.gameState = GameManager.State.Playing;
             cc.CreateAllCamps();
         }
+    }
+
+    private void DrawOptionsMenu()
+    {
+        //sound effect volume
+
+        //music volume
+
+        //ui size
+
+        //colorblind mode
+        //"Off"
+        //"Deuteranopia/Protanopia"
     }
 
     private void DrawIngameUI()
@@ -147,12 +162,12 @@ public class UIOverlay : MonoBehaviour {
             GameManager.gameState = GameManager.State.End;
         }
 
-        int runningOffset = 0;
+        float runningOffset = 0;
         for (int i = 0; i < factionNumbers.Length; i++) {
             Texture2D tex = new Texture2D(1,1, TextureFormat.ARGB32, false);
             tex.SetPixel(0, 0, GameManager.playerColors[i]);
             tex.Apply();
-            int width = (Screen.width * factionNumbers[i]) / numCamps;
+            float width = ((float)Screen.width * factionNumbers[i]) / numCamps;
             GUI.DrawTexture(new Rect(runningOffset, 0, width, 30), tex);
             runningOffset += width;
         }

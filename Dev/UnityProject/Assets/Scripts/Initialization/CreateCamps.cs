@@ -40,6 +40,7 @@ struct Tuple<T, U> : IEquatable<Tuple<T, U>>
 
 public class CreateCamps : MonoBehaviour
 {
+    public Transform planet;
     public GameObject campPrefab;
     public Transform campParent;
     public GameObject armyPrefab;
@@ -64,7 +65,7 @@ public class CreateCamps : MonoBehaviour
 
         for (int i = 0; i < drawFrom.Count; i++)
         {
-            Debug.DrawLine(drawFrom[i], drawTo[i], Color.white);
+            Debug.DrawLine(planet.rotation * drawFrom[i], planet.rotation * drawTo[i], Color.white);
         }
     }
 
@@ -440,7 +441,7 @@ public class CreateCamps : MonoBehaviour
                                 //quad-point found
                                 Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position, third.transform.position);
                                 mid = mid.normalized * 5.1f;
-                                if (!intersections.Contains(mid))
+                                if (!intersections.Contains(mid) && mid.magnitude > 1)
                                     intersections.Add(mid);
                             }
                         }
