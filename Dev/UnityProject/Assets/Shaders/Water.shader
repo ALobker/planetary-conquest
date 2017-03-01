@@ -52,9 +52,9 @@
 				float3 position = input.position;
 				float3 normal = input.normal;
 
-				float angleXY = abs(dot(normal, float3(0.0f, 0.0f, 1.0)));
-				float angleYZ = abs(dot(normal, float3(1.0f, 0.0f, 0.0)));
-				float angleZX = abs(dot(normal, float3(0.0f, 1.0f, 0.0)));
+				float angleXY = abs(dot(normal, float3(0.0, 0.0, 1.0)));
+				float angleYZ = abs(dot(normal, float3(1.0, 0.0, 0.0)));
+				float angleZX = abs(dot(normal, float3(0.0, 1.0, 0.0)));
 
 				float angleSum = angleXY + angleYZ + angleZX;
 
