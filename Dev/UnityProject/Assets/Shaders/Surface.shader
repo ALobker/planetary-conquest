@@ -10,7 +10,7 @@
 		LOD 200
 		
 		CGPROGRAM
-			#pragma surface surf Bla vertex:vert
+			#pragma surface surf Standard vertex:vert
 			#pragma target 3.0
 
 			sampler2D GrassTexture;
@@ -32,16 +32,37 @@
 			void vert(inout appdata_full data, out Input input) {
 				UNITY_INITIALIZE_OUTPUT(Input, input);
 
-				input.position = data.vertex.xyz;
-				input.normal = data.normal.xyz;
+				float3 xAxis = float3(1.0, 0.0, 0.0);
+				float3 yAxis = float3(0.0, 1.0, 0.0);
+				float3 zAxis = float3(0.0, 0.0, 1.0);
 
-				float3 bitangent = cross(data.normal.xyz, data.tangent.xyz);
-				data.tangent = float4(cross(bitangent, data.normal.xyz), data.tangent.w);
+				input.position = data.vertex.xyz;
+				//input.normal = data.normal.xyz;
+
+				//float3 bitangent = cross(data.normal.xyz, data.tangent.xyz);
+				//data.tangent = float4(cross(bitangent, data.normal.xyz), data.tangent.w);
+
+				float3 tangent = xAxis;//data.tangent.xyz;
+				float3 normal = normalize(data.normal.xyz);
+
+				// ortho-normalize Tangent
+				tangent = normalize(tangent - normal * dot(tangent, normal));
+
+				// recalculate Binormal
+				//half3 newB = cross(normal, tangent);
+				//float3 binormal = newB * sign(dot(newB, binormal));
+
+				//data.tangent = float4(tangent, -1);
+				//data.normal = float4(normal, 0);
+
+				data.tangent = float4(xAxis, 1);
+				data.normal = float4(zAxis, 0);
 
 				input.tangent = data.tangent;
+				input.normal = data.normal.xyz;
 			}
 			
-			void surf(Input input, inout SurfaceOutput/*Standard*/ output) {
+			void surf(Input input, inout SurfaceOutputStandard output) {
 				float3 position = input.position;
 				float3 normal = input.normal;
 
@@ -75,7 +96,7 @@
 
 				//float3 grassNormalXY = UnpackNormal(tex2D(GrassNormals, grassCoordinates.xy));
 				//float3 grassNormalYZ = UnpackNormal(tex2D(GrassNormals, grassCoordinates.yz));
-				float3 grassNormalZX = UnpackNormal(tex2D(GrassNormals, grassCoordinates.xz));
+				float3 grassNormalZX = normalize(UnpackNormal(tex2D(GrassNormals, grassCoordinates.zx)));
 
 				//float3 grassNormalYX = grassNormalXY * float3(1.0, 1.0, 1.0);
 				//float3 grassNormalZY = grassNormalYZ * float3(1.0, 1.0, 1.0);
@@ -100,7 +121,7 @@
 				//float3x3 objectSpaceToTangentSpaceYZ = float3x3(yAxis, zAxis, xAxis);
 				//float3x3 tangentSpaceToObjectSpaceYZ = transpose(objectSpaceToTangentSpaceYZ);
 
-				float3x3 objectSpaceToTangentSpaceZX = float3x3(xAxis, zAxis, yAxis);
+				float3x3 objectSpaceToTangentSpaceZX = transpose(float3x3(zAxis, xAxis, yAxis));
 				float3x3 tangentSpaceToObjectSpaceZX = transpose(objectSpaceToTangentSpaceZX);
 
 				//float3 grassNormalInObjectSpaceXY = mul(grassNormalXY, tangentSpaceToObjectSpaceXY);
@@ -113,9 +134,28 @@
 
 				float3 grassNormalInTangentSpace = mul(grassNormal, objectSpaceToTangentSpace);
 
-				output.Albedo = 1;
+				output.Albedo = 0.5;
 
-				if(grassNormalInTangentSpace.z < 0) {
+				//output.Albedo = dot(grassNormal, xAxis);
+
+				/*if(grassNormalZX.x < -0.1) {
+					if(grassNormalZX.z > 0.1) {
+						output.Albedo = fixed3(grassNormalZX.z * 0.5 + 0.5, 0, 0);
+					}
+				}
+				else if(grassNormalZX.x > 0.1) {
+					if (grassNormalZX.z > 0.1) {
+						output.Albedo = fixed3(0, grassNormalZX.z * 0.5 + 0.5, 0);
+					}
+				}*/
+
+				/*if(grassNormalZX.y > 0.25) {
+					if(grassNormalZX.z > 0.96) {
+						output.Albedo = fixed3(grassNormalZX.z * 0.5 + 0.5, 0, 0);
+					}
+				}*/
+
+/*				if(grassNormalInTangentSpace.z < 0) {
 					output.Albedo = float3(-grassNormalInTangentSpace.z, 0, 0);
 				}
 				else if(grassNormalInTangentSpace.z > 0) {
@@ -124,7 +164,7 @@
 				else {
 					output.Albedo = float3(0, 1, 0);
 				}
-
+*/
 				//if(length(grassNormalInTangentSpace) < 0.001) {
 				//	grassNormalInTangentSpace = zAxis;
 				//}
@@ -145,7 +185,7 @@
 				//output.Albedo = grassColor.rgb;
 				//output.Metallic = 0.0;
 				//output.Smoothness = 0.0;// grassColor.a;
-				output.Normal = zAxis;//grassNormalInTangentSpace;
+				output.Normal = grassNormalInTangentSpace;
 
 				if (position.x < 0 || position.y < 0 || position.z < 0) {
 					output.Albedo = 0;
