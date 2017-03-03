@@ -14,15 +14,13 @@
 			#pragma surface surf Standard vertex:vert
 			#pragma target 3.0
 
+
 			#define EPSILON 1e-3
 
 			#define POSITIVE_X_AXIS float3(1.0, 0.0, 0.0)
 			#define POSITIVE_Y_AXIS float3(0.0, 1.0, 0.0)
 			#define POSITIVE_Z_AXIS float3(0.0, 0.0, 1.0)
 
-			#define NEGATIVE_X_AXIS float3(-1.0, 0.0, 0.0)
-			#define NEGATIVE_Y_AXIS float3(0.0, -1.0, 0.0)
-			#define NEGATIVE_Z_AXIS float3(0.0, 0.0, -1.0)
 
 			sampler2D GrassTexture;
 			sampler2D GrassNormals;
@@ -30,10 +28,12 @@
 
 			float WaterLevel;
 
+
 			struct Input {
 				float3 position;
 				float3 normal;
 			};
+
 
 			void vert(inout appdata_full data, out Input input) {
 				UNITY_INITIALIZE_OUTPUT(Input, input);
@@ -47,36 +47,44 @@
 				data.tangent = float4(POSITIVE_X_AXIS, 1);
 				data.normal = float4(POSITIVE_Z_AXIS, 0);
 			}
+
+
+			/**
+			 * Returns -1 if the value is smaller than 0, and 1 if the value is larger than or equal to 0.
+			 */
+			inline float stretch(float value) {
+				return step(0.0, value) * 2.0 - 1.0;
+			}
+
+			/**
+			 * Returns the first value if A is larger than or equal to B, and the second value if A
+			 * is smaller than B.
+			 */
+			inline float3 pick(float3 value1, float3 value2, float a, float b) {
+				return lerp(value2, value1, step(b, a));
+			}
 			
 			void surf(Input input, inout SurfaceOutputStandard output) {
 				float3 position = input.position;
 				float3 normal = input.normal;
 
-				float angleXY = saturate(dot(normal, float3(0.0, 0.0, 1.0)));
-				float angleYZ = saturate(dot(normal, float3(1.0, 0.0, 0.0)));
-				float angleZX = saturate(dot(normal, float3(0.0, 1.0, 0.0)));
+				float angleXY = abs(dot(normal, float3(0.0, 0.0, 1.0)));
+				float angleYZ = abs(dot(normal, float3(1.0, 0.0, 0.0)));
+				float angleZX = abs(dot(normal, float3(0.0, 1.0, 0.0)));
 
-				//float angleYX = saturate(dot(normal, float3(0.0, 0.0, -1.0)));
-				//float angleZY = saturate(dot(normal, float3(-1.0, 0.0, 0.0)));
-				//float angleXZ = saturate(dot(normal, float3(0.0, -1.0, 0.0)));
-
-				float angleSum = angleXY + angleYZ + angleZX;// + angleYX + angleZY + angleXZ;
+				float angleSum = angleXY + angleYZ + angleZX;
 
 				float weightXY = angleXY / angleSum;
 				float weightYZ = angleYZ / angleSum;
 				float weightZX = angleZX / angleSum;
 
-				//float weightYX = angleYX / angleSum;
-				//float weightZY = angleZY / angleSum;
-				//float weightXZ = angleXZ / angleSum;
-
 				float3 grassCoordinates = position / GrassScale;
 
-				//fixed4 grassColor = 0.0;
+				fixed4 grassColor = 0.5;
 
-				//grassColor += tex2D(GrassTexture, grassCoordinates.xy) * (weightXY + weightYX);
-				//grassColor += tex2D(GrassTexture, grassCoordinates.yz) * (weightYZ + weightZY);
-				//grassColor += tex2D(GrassTexture, grassCoordinates.zx) * (weightZX + weightXZ);
+				//grassColor += tex2D(GrassTexture, grassCoordinates.xy) * weightXY;
+				//grassColor += tex2D(GrassTexture, grassCoordinates.yz) * weightYZ;
+				//grassColor += tex2D(GrassTexture, grassCoordinates.zx) * weightZX;
 
 				float3x3 objectSpaceToTangentSpaceXY = float3x3(POSITIVE_X_AXIS, POSITIVE_Y_AXIS, POSITIVE_Z_AXIS);
 				float3x3 tangentSpaceToObjectSpaceXY = transpose(objectSpaceToTangentSpaceXY);
@@ -95,6 +103,14 @@
 				float3 grassNormalInObjectSpaceYZ = mul(tangentSpaceToObjectSpaceYZ, grassNormalInTangentSpaceYZ);
 				float3 grassNormalInObjectSpaceZX = mul(tangentSpaceToObjectSpaceZX, grassNormalInTangentSpaceZX);
 
+				// Flip each sampled normal over its tangent plane (in object space) if it is not
+				// on the same side of its tangent plane as the surface normal. This way it will
+				// always face outwards. This is necessary since normals have a direction, as
+				// opposed to the other values such as color, which are scalars.
+				grassNormalInObjectSpaceXY.z = stretch(normal.z) * grassNormalInObjectSpaceXY.z;
+				grassNormalInObjectSpaceYZ.x = stretch(normal.x) * grassNormalInObjectSpaceYZ.x;
+				grassNormalInObjectSpaceZX.y = stretch(normal.y) * grassNormalInObjectSpaceZX.y;
+
 				float3 grassNormal = 0.0;
 
 				// Take the weighted average of the three sampled normals in object space.
@@ -105,7 +121,7 @@
 				// If the weighted average is (near) the zero vector we can use the surface normal
 				// instead. This is analogous to taking a weighted average over the unit sphere,
 				// because the exact centroid would then be (near) the surface normal.
-				grassNormal = lerp(grassNormal, normal, step(length(grassNormal), EPSILON));
+				grassNormal = pick(grassNormal, normal, length(grassNormal), EPSILON);
 
 				// Now we can safely make sure the normal has the unit length.
 				grassNormal = normalize(grassNormal);
@@ -114,16 +130,12 @@
 				// inversion instead. This is analogous to taking a weighted average over the long
 				// angles of a unit sphere. This means it always produces a weighted average in the
 				// hemisphere centered on the surface normal (i.e. above the surface).
-				grassNormal = (step(0.0, dot(grassNormal, normal)) * 2.0 - 1.0) * grassNormal;
+				grassNormal = stretch(dot(grassNormal, normal)) * grassNormal;
 
-				output.Albedo = 0.5;//grassColor.rgb;
+				output.Albedo = grassColor.rgb;
 				//output.Metallic = 0.0;
 				//output.Smoothness = grassColor.a;
 				output.Normal = grassNormal;
-
-				if (position.x < 0 || position.y < 0 || position.z < 0) {
-					output.Albedo = 0;
-				}
 			}
 		ENDCG
 	}
