@@ -1,10 +1,12 @@
 ﻿Shader "Planet/Surface" {
 	Properties {
-		[NoScaleOffset]
-		GrassTexture("Grass Texture", 2D) = "white" {}
-		[NoScaleOffset]
-		GrassNormals("Grass Normals", 2D) = "white" {}
+		[Header(Grass)]
+		[NoScaleOffset] GrassTexture("Grass Texture", 2D) = "white" {}
+		[NoScaleOffset] GrassNormals("Grass Normals", 2D) = "white" {}
 		GrassScale("Grass Scale", Float) = 1.0
+
+		[Header(Options)]
+		[ToggleOff] BitangentCorrection("Invert Green Channel of Normal Maps", Float) = 0.0
 	}
 	SubShader {
 		Tags { "RenderType" = "Opaque" }
@@ -17,11 +19,18 @@
 
 			#define EPSILON 1e-3
 
-			#define POSITIVE_X_AXIS float3(1.0, 0.0, 0.0)
-			#define POSITIVE_Y_AXIS float3(0.0, 1.0, 0.0)
-			#define POSITIVE_Z_AXIS float3(0.0, 0.0, 1.0)
+			#define X_AXIS float3(1.0, 0.0, 0.0)
+			#define Y_AXIS float3(0.0, 1.0, 0.0)
+			#define Z_AXIS float3(0.0, 0.0, 1.0)
 
 
+			/**
+			 * Whether or not to correct (invert) the bitangent of the normal maps.
+			 * 
+			 * Can be either 0 (don't correct) or 1 (do correct).
+			 */
+			float BitangentCorrection;
+			
 			sampler2D GrassTexture;
 			sampler2D GrassNormals;
 			float GrassScale;
@@ -44,8 +53,8 @@
 				// Since we work with object space normals, replace the tangent space in such a way
 				// that the transformation from object space is the identity transformation. Then we
 				// won't have to bother with tangent space transformations in the surface shader.
-				data.tangent = float4(POSITIVE_X_AXIS, 1);
-				data.normal = float4(POSITIVE_Z_AXIS, 0);
+				data.tangent = float4(X_AXIS, 1);
+				data.normal = float4(Z_AXIS, 0);
 			}
 
 
@@ -63,60 +72,89 @@
 			inline float3 pick(float3 value1, float3 value2, float a, float b) {
 				return lerp(value2, value1, step(b, a));
 			}
+
+			/**
+			 * Changes the sign of the value along the specified cardinal axis.
+			 */
+			inline float3 flip(float3 value, float newSign, float3 axis) {
+				return (1 - axis) * value + newSign * axis * value;
+			}
+
+			/**
+			 * Flips the tangent space normal along the bitangent axis if configured to do so.
+			 */
+			float3 correctBitangent(float3 normal) {
+				float bitangentCorrectness = 1.0 - BitangentCorrection;
+				float bitangentSign = bitangentCorrectness * 2.0 - 1.0;
+
+				normal.y = bitangentSign * normal.y;
+
+				return normal;
+			}
+
+			/**
+			 * Samples the color from the texture using the specified coordinates.
+			 */
+			float4 sampleColor(sampler2D colors, float2 coordinates) {
+				return tex2D(colors, coordinates);
+			}
+
+			/**
+			 * Samples the normal from the texture using the specified coordinates, transforms it
+			 * from tangent space to object space, and flips it to the same side of the tangent
+			 * plane as the surface normal.
+			 */
+			float3 sampleNormal(sampler2D normals, float2 coordinates, float3 tangent, float3 bitangent, float3 normal, float3 surfaceNormal) {
+				// Create the tangent space transformations for the tangent space normal.
+				float3x3 objectSpaceToTangentSpace = float3x3(tangent, bitangent, normal);
+				float3x3 tangentSpaceToObjectSpace = transpose(objectSpaceToTangentSpace);
+
+				// Sample the tangent space normal and transform it to object space.
+				float3 normalInTangentSpace = correctBitangent(UnpackNormal(tex2D(normals, coordinates)));
+				float3 normalInObjectSpace = mul(tangentSpaceToObjectSpace, normalInTangentSpace);
+
+				// Flip the sampled normal over its tangent plane (in object space) if it is not
+				// on the same side of its tangent plane as the surface normal. This way it will
+				// always face outwards. This is necessary since normals have a direction, as
+				// opposed to the other values such as color, which are scalars.
+				return flip(normalInObjectSpace, stretch(dot(surfaceNormal, normal)), normal);
+			}
 			
 			void surf(Input input, inout SurfaceOutputStandard output) {
 				float3 position = input.position;
 				float3 normal = input.normal;
 
-				float angleXY = abs(dot(normal, float3(0.0, 0.0, 1.0)));
-				float angleYZ = abs(dot(normal, float3(1.0, 0.0, 0.0)));
-				float angleZX = abs(dot(normal, float3(0.0, 1.0, 0.0)));
+				// Get a measure of how close the surface normal is to each of the three cardinal
+				// axes. Since a dot product with a cardinal axis is just the corresponding
+				// component of the input vector, we can just use those directly instead.
+				float measureX = abs(normal.x);
+				float measureY = abs(normal.y);
+				float measureZ = abs(normal.z);
 
-				float angleSum = angleXY + angleYZ + angleZX;
+				// Use the measures to determine how much each cardinal axis contributes to the
+				// surface normal.
+				float measureTotal = measureX + measureY + measureZ;
 
-				float weightXY = angleXY / angleSum;
-				float weightYZ = angleYZ / angleSum;
-				float weightZX = angleZX / angleSum;
+				float weightX = measureX / measureTotal;
+				float weightY = measureY / measureTotal;
+				float weightZ = measureZ / measureTotal;
 
+				// Repeat the textures according to the supplied scale.
 				float3 grassCoordinates = position / GrassScale;
 
-				fixed4 grassColor = 0.5;
+				// Take the weighted average of the three sampled colors.
+				fixed4 grassColor = 0.0;
 
-				//grassColor += tex2D(GrassTexture, grassCoordinates.xy) * weightXY;
-				//grassColor += tex2D(GrassTexture, grassCoordinates.yz) * weightYZ;
-				//grassColor += tex2D(GrassTexture, grassCoordinates.zx) * weightZX;
-
-				float3x3 objectSpaceToTangentSpaceXY = float3x3(POSITIVE_X_AXIS, POSITIVE_Y_AXIS, POSITIVE_Z_AXIS);
-				float3x3 tangentSpaceToObjectSpaceXY = transpose(objectSpaceToTangentSpaceXY);
-
-				float3x3 objectSpaceToTangentSpaceYZ = float3x3(POSITIVE_Y_AXIS, POSITIVE_Z_AXIS, POSITIVE_X_AXIS);
-				float3x3 tangentSpaceToObjectSpaceYZ = transpose(objectSpaceToTangentSpaceYZ);
-
-				float3x3 objectSpaceToTangentSpaceZX = float3x3(POSITIVE_Z_AXIS, POSITIVE_X_AXIS, POSITIVE_Y_AXIS);
-				float3x3 tangentSpaceToObjectSpaceZX = transpose(objectSpaceToTangentSpaceZX);
-
-				float3 grassNormalInTangentSpaceXY = UnpackNormal(tex2D(GrassNormals, grassCoordinates.xy));
-				float3 grassNormalInTangentSpaceYZ = UnpackNormal(tex2D(GrassNormals, grassCoordinates.yz));
-				float3 grassNormalInTangentSpaceZX = UnpackNormal(tex2D(GrassNormals, grassCoordinates.zx));
-
-				float3 grassNormalInObjectSpaceXY = mul(tangentSpaceToObjectSpaceXY, grassNormalInTangentSpaceXY);
-				float3 grassNormalInObjectSpaceYZ = mul(tangentSpaceToObjectSpaceYZ, grassNormalInTangentSpaceYZ);
-				float3 grassNormalInObjectSpaceZX = mul(tangentSpaceToObjectSpaceZX, grassNormalInTangentSpaceZX);
-
-				// Flip each sampled normal over its tangent plane (in object space) if it is not
-				// on the same side of its tangent plane as the surface normal. This way it will
-				// always face outwards. This is necessary since normals have a direction, as
-				// opposed to the other values such as color, which are scalars.
-				grassNormalInObjectSpaceXY.z = stretch(normal.z) * grassNormalInObjectSpaceXY.z;
-				grassNormalInObjectSpaceYZ.x = stretch(normal.x) * grassNormalInObjectSpaceYZ.x;
-				grassNormalInObjectSpaceZX.y = stretch(normal.y) * grassNormalInObjectSpaceZX.y;
-
-				float3 grassNormal = 0.0;
+				grassColor += sampleColor(GrassTexture, grassCoordinates.xy) * weightZ;
+				grassColor += sampleColor(GrassTexture, grassCoordinates.yz) * weightX;
+				grassColor += sampleColor(GrassTexture, grassCoordinates.zx) * weightY;
 
 				// Take the weighted average of the three sampled normals in object space.
-				grassNormal += grassNormalInObjectSpaceXY * weightXY;
-				grassNormal += grassNormalInObjectSpaceYZ * weightYZ;
-				grassNormal += grassNormalInObjectSpaceZX * weightZX;
+				float3 grassNormal = 0.0;
+
+				grassNormal += sampleNormal(GrassNormals, grassCoordinates.xy, X_AXIS, Y_AXIS, Z_AXIS, normal) * weightZ;
+				grassNormal += sampleNormal(GrassNormals, grassCoordinates.yz, Y_AXIS, Z_AXIS, X_AXIS, normal) * weightX;
+				grassNormal += sampleNormal(GrassNormals, grassCoordinates.zx, Z_AXIS, X_AXIS, Y_AXIS, normal) * weightY;
 
 				// If the weighted average is (near) the zero vector we can use the surface normal
 				// instead. This is analogous to taking a weighted average over the unit sphere,
@@ -133,8 +171,8 @@
 				grassNormal = stretch(dot(grassNormal, normal)) * grassNormal;
 
 				output.Albedo = grassColor.rgb;
-				//output.Metallic = 0.0;
-				//output.Smoothness = grassColor.a;
+				output.Metallic = 0.0;
+				output.Smoothness = grassColor.a;
 				output.Normal = grassNormal;
 			}
 		ENDCG
