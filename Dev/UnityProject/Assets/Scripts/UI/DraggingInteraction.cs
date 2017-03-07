@@ -60,6 +60,7 @@ public class DraggingInteraction : MonoBehaviour
 
                 selectedArrow = selectedCamp.arrow;
                 selectedArrow.gameObject.SetActive(true);
+                selectedArrow.localPosition = Vector3.zero;
             }
         }
         if (Input.GetButton("Fire1"))
@@ -83,6 +84,7 @@ public class DraggingInteraction : MonoBehaviour
                     float angle = -AngleSigned(dragEnd - Projection, selectedCamp.transform.right, selectedCamp.transform.up);
                     //Debug.Log(angle);
 
+                    selectedArrow.localPosition = Vector3.zero;
                     Quaternion rotation = Quaternion.Euler(new Vector3(0, angle, 0));
                     //Quaternion offset = Quaternion.Euler(20, 0, 0);
                     //selectedArrow.transform.rotation = rotation * offset;
@@ -131,6 +133,7 @@ public class DraggingInteraction : MonoBehaviour
                         }
                     }
 
+                    selectedArrow.position = Vector3.Slerp(selectedCamp.transform.position, bestNeigh.transform.position, .25f);
                     campAngle = -AngleSigned(bestNeigh.transform.position - Vector3.Project(bestNeigh.transform.position, dragStart), selectedCamp.transform.right, selectedCamp.transform.up);
                     Quaternion rotation = Quaternion.Euler(new Vector3(0, campAngle, 0));
                     selectedArrow.transform.localRotation = rotation;

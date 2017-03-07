@@ -38,7 +38,7 @@ public class GameManager : MonoBehaviour
     {
         if (gameState == State.Playing)
         {
-            planet.rotation = Quaternion.Euler(planet.rotation.eulerAngles + Vector3.up * Time.deltaTime);
+            planet.rotation = Quaternion.Euler(planet.rotation.eulerAngles - Vector3.up * Time.deltaTime);
         }
     }
 }

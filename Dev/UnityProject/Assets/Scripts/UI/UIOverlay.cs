@@ -76,7 +76,7 @@ public class UIOverlay : MonoBehaviour {
         GUI.Label(new Rect(offsetX, playersY, 100, buttonHeight), "Players");
         for (int i = 2; i <= 10; i++)
         {
-            if (GUI.Toggle(new Rect(offsetX + 50*i, playersY, 70, buttonHeight), selectedPlayers == i, ""+i))
+            if (GUI.Toggle(new Rect(offsetX + 50*i, playersY, 50, buttonHeight), selectedPlayers == i, ""+i))
                 selectedPlayers = i;
         }
         GameManager.numPlayers = selectedPlayers;

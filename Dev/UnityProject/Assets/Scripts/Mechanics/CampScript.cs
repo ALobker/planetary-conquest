@@ -20,6 +20,7 @@ public class CampScript : MonoBehaviour
 
     private float campHealth = 1;
     private float deploymentTimer = 0;
+    private float lastAttackTimer = 0;
 
     // Use this for initialization
     void Start()
@@ -51,19 +52,22 @@ public class CampScript : MonoBehaviour
         {
             numUnits += Time.deltaTime * productionMultiplier;
         }
-        else //enemy army
+        else if(numUnits < 2f && lastAttackTimer > 1f) //enemy army
         {
-            /* TODO: fix bug where base cannot be taken over
-            numUnits -= Time.deltaTime * productionMultiplier;
+            numUnits -= Time.deltaTime * productionMultiplier * 0.1f;
             if(numUnits <= 0)
             {
                 numUnits = 0;
                 armyFaction = faction;
+
+                selectedNeighbour = null;
+                arrow.gameObject.SetActive(false);
+                deploymentTimer = 0;
             }
-            */
         }
 
         deploymentTimer += Time.deltaTime * deploymentMultiplier;
+        lastAttackTimer += Time.deltaTime;
 
         if (faction != armyFaction)
         {
@@ -108,11 +112,14 @@ public class CampScript : MonoBehaviour
         else if (numUnits >= 1f)
         {
             numUnits--;
+            lastAttackTimer = 0;
         }
         else
         {
             numUnits = 0;
             armyFaction = army.faction;
+
+            lastAttackTimer = 0;
         }
     }
 

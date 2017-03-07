@@ -16,6 +16,7 @@ public class HiveAI : MonoBehaviour
     public float captureFactor = 1;
     public float unitsFactor = 1;
     public float frontlineFactor = .25f;
+    public float surroundFactor = .1f;
 
     private float actionTimer = 0;
 
@@ -62,7 +63,7 @@ public class HiveAI : MonoBehaviour
                 CampScript neigh = camp.neighbours[i];
                 float likelihood = 0.5f; //base likelihood
 
-                if (camp.faction == neigh.faction && neigh.numUnits > 100)
+                if (camp.faction == neigh.armyFaction && neigh.numUnits > 100)
                 {
                     //dont send units to a mega base
                     likelihood = 0.01f;
@@ -75,7 +76,7 @@ public class HiveAI : MonoBehaviour
                     //neighbour is enemy
                     if (neigh.faction != camp.faction)
                         likelihood += enemyFactor;
-                    //rescue our own towers
+                    //rescue our own camps
                     if (neigh.faction == camp.faction && neigh.faction != neigh.armyFaction)
                         likelihood += rescueFactor;
                     //reinforce neighbours that we are invading
@@ -90,7 +91,20 @@ public class HiveAI : MonoBehaviour
                         if (second.faction != camp.faction)
                             numEnemyCamps++;
                     }
-                    likelihood += frontlineFactor * (1f / (numEnemyCamps + 1));
+                    likelihood += frontlineFactor * numEnemyCamps;
+                    //is the neighbour surrounded by enemies
+                    float numSurroundEnemies = 0;
+                    foreach (CampScript second in neigh.neighbours)
+                    {
+                        if (second == camp)
+                            continue;
+                        if (second.armyFaction != camp.faction)
+                            numSurroundEnemies += second.numUnits;
+                        else
+                            numSurroundEnemies -= second.numUnits;
+                    }
+                    if(numSurroundEnemies > 0)
+                        likelihood += surroundFactor * Mathf.Sqrt(numSurroundEnemies);
                 }
 
                 likelihoods[i] = likelihood;
@@ -117,6 +131,7 @@ public class HiveAI : MonoBehaviour
                 }
             }
 
+            camp.arrow.transform.position = Vector3.Slerp(camp.transform.position, bestNeigh.transform.position, .25f);
             float campAngle = -DraggingInteraction.AngleSigned(bestNeigh.transform.position - Vector3.Project(bestNeigh.transform.position, camp.transform.position), camp.transform.right, camp.transform.up);
             Quaternion rotation = Quaternion.Euler(new Vector3(0, campAngle, 0));
             camp.arrow.transform.localRotation = rotation;

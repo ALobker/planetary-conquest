@@ -45,9 +45,11 @@ public class CreateCamps : MonoBehaviour
     public Transform campParent;
     public GameObject armyPrefab;
     public Transform armyParent;
+    public Material lineMat;
+    public Transform lineParent;
     public int numCamps = 10;
 
-    private List<Vector3> drawFrom, drawTo;
+    //private List<Vector3> drawFrom, drawTo;
 
     // Use this for initialization
     void Start()
@@ -60,13 +62,13 @@ public class CreateCamps : MonoBehaviour
     {
         if (GameManager.gameState != GameManager.State.Playing)
             return;
-        if (drawFrom == null)
+        /*if (drawFrom == null)
             return;
 
         for (int i = 0; i < drawFrom.Count; i++)
         {
             Debug.DrawLine(planet.rotation * drawFrom[i], planet.rotation * drawTo[i], Color.white);
-        }
+        }*/
     }
 
     public void CreateAllCamps()
@@ -185,8 +187,8 @@ public class CreateCamps : MonoBehaviour
             camps[indexes[i]].faction = i + 1;
         }
 
-        drawFrom = new List<Vector3>();
-        drawTo = new List<Vector3>();
+        //drawFrom = new List<Vector3>();
+        //drawTo = new List<Vector3>();
         //DrawConnections(camps);
         //DrawBorders(camps);
         DrawBordersAlternative(camps);
@@ -203,6 +205,7 @@ public class CreateCamps : MonoBehaviour
     {
         DestroyAllChildren(campParent);
         DestroyAllChildren(armyParent);
+        DestroyAllChildren(lineParent);
     }
 
     private void DestroyAllChildren(Transform parent)
@@ -399,11 +402,16 @@ public class CreateCamps : MonoBehaviour
             List<KeyValuePair<Vector3, float>> best4 = distances.OrderBy(pair => pair.Value).Take(4).ToList();
             if (best4.Count > 0)
                 bestDist = Mathf.Min(bestDist, best4[0].Value);
+            List<Vector3> points = new List<Vector3>();
             foreach (KeyValuePair<Vector3, float> edge in best4)
             {
                 if (edge.Value - bestDist < 0.01f)
-                    DrawLine(intersections[i], edge.Key);
+                {
+                    //DrawLine(intersections[i], edge.Key);
+                    points.Add(intersections[i]);
+                }
             }
+            DrawLine(points);
         }
     }
 
@@ -424,7 +432,7 @@ public class CreateCamps : MonoBehaviour
                         //Debug.Log("intersect");
                         //tri-point found
                         Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position);
-                        mid = mid.normalized * 5.1f;
+                        mid = mid.normalized * 5.05f;
                         if (!intersections.Contains(mid))
                             intersections.Add(mid);
                     }
@@ -440,7 +448,7 @@ public class CreateCamps : MonoBehaviour
                             {
                                 //quad-point found
                                 Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position, third.transform.position);
-                                mid = mid.normalized * 5.1f;
+                                mid = mid.normalized * 5.05f;
                                 if (!intersections.Contains(mid) && mid.magnitude > 1)
                                     intersections.Add(mid);
                             }
@@ -471,26 +479,27 @@ public class CreateCamps : MonoBehaviour
             List<Vector3> sortedIntersections = intersections.OrderBy(point => -DraggingInteraction.AngleSigned(point - camp.transform.position, camp.transform.right, camp.transform.up)).ToList();
 
             //connect all intersections (counter) clockwise
-            for (int i = 0; i < sortedIntersections.Count - 1; i++)
+            DrawLine(sortedIntersections);
+            /*for (int i = 0; i < sortedIntersections.Count - 1; i++)
             {
                 DrawLine(sortedIntersections[i], sortedIntersections[i + 1]);
             }
-            DrawLine(sortedIntersections[sortedIntersections.Count - 1], sortedIntersections[0]);
+            DrawLine(sortedIntersections[sortedIntersections.Count - 1], sortedIntersections[0]);*/
         }
     }
 
     private void DrawConnections(List<CampScript> camps)
     {
-        foreach (CampScript camp in camps)
+        /*foreach (CampScript camp in camps)
         {
             foreach (CampScript neigh in camp.neighbours)
             {
                 DrawLine(camp.transform.position, neigh.transform.position);
             }
-        }
+        }*/
     }
 
-    private void DrawLine(Vector3 p1, Vector3 p2)
+    /*private void DrawLine(Vector3 p1, Vector3 p2)
     {
         float dist = Vector3.Distance(p1, p2);
         int numSegs = Mathf.CeilToInt(dist / 1f);
@@ -502,6 +511,35 @@ public class CreateCamps : MonoBehaviour
             drawTo.Add(b);
             //Debug.DrawLine(a, b, Color.white);
         }
+    }*/
+
+    private void DrawLine(List<Vector3> points)
+    {
+        GameObject myLine = new GameObject();
+        myLine.name = "Border";
+        myLine.transform.parent = lineParent;
+        myLine.transform.position = Vector3.zero;
+        LineRenderer lr = myLine.AddComponent<LineRenderer>();
+        lr.material = lineMat;
+        lr.startWidth = 0.1f;
+        lr.endWidth = 0.1f;
+        lr.useWorldSpace = false;
+        int ind = 0;
+        for(int i = 0; i < points.Count; i++) {
+            Vector3 p1 = points[i];
+            Vector3 p2 = points[(i+1)%points.Count];
+            float dist = Vector3.Distance(p1, p2);
+            int numSegs = Mathf.CeilToInt(dist / 1f);
+            for (int j = 0; j < numSegs; j++)
+            {
+                Vector3 a = Vector3.Slerp(p1, p2, (float)j / numSegs);
+                lr.numPositions = ind + j + 1;
+                lr.SetPosition(ind + j, a);
+            }
+            ind += numSegs;
+        }
+        lr.numPositions = ind + 1;
+        lr.SetPosition(ind, points[0]);
     }
 
     //Overlay function because i want to use points instead of directions
