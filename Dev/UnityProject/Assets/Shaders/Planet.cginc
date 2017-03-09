@@ -192,3 +192,32 @@ float sampleSurfaceHeight(float3 surface) {
 void correctSurfaceSmoothness(inout float3 surface, float smoothnessCorrection) {
 	surface.g = correctSmoothness(surface.g, smoothnessCorrection);
 }
+
+
+/**
+ * Performs a height-adjusted linear blend between the two colors.
+ * 
+ * Based on http://www.gamasutra.com/blogs/AndreyMishkinis/20130716/196339/Advanced_Terrain_Texture_Splatting.php,
+ * but truncates the depth to the alpha value so height blending does not occur outside of the interpolation interval.
+ */
+float3 heightBlend(float3 color1, float height1, float3 color2, float height2, float depth, float alpha) {
+	// Vectorize the weights.
+	float2 heights = float2(height1, height2);
+	float2 alphas = float2(1.0 - alpha, alpha);
+
+	// Incorporate the height into the weights.
+	heights = alphas + heights;
+
+	// Calculate the overall height.
+	float height = max(heights.x, heights.y);
+
+	// Calculate the depths to use. This limits blending to the interpolation interval.
+	float2 depths = min(depth, alphas);
+
+	// Calculate the weights as the relative distances between the heights and a lower bound determined by the depths.
+	// These weights do not have to be divided by the total distance, because they will be normalized later anyways.
+	float2 weights = saturate(heights - (height - depths));
+
+	// Interpolate between the two colors based on the adjusted weights.
+	return (color1 * weights.x + color2 * weights.y) / (weights.x + weights.y);
+}

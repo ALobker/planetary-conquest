@@ -15,48 +15,58 @@
  */
 Shader "Planet/Surface" {
 	Properties {
-		// Material properties for the rock layer.
+		// Material properties for the rock layer. See above for their descriptions.
 		[Header(Rock)]
 		[NoScaleOffset] Rock_AlbedoTexture("Albedo", 2D) = "white" {}
 		[NoScaleOffset] Rock_NormalTexture("Normal", 2D) = "bump" {}
 		[NoScaleOffset] Rock_SurfaceTexture("Metallic (R), Smoothness (G), and Height (B)", 2D) = "black" {}
 		Rock_TextureScale("Scale", Float) = 1.0
+		[Space]
 		[ToggleOff] Rock_BitangentCorrection("Invert Green Channel of Normal", Float) = 0.0
 		[ToggleOff] Rock_SmoothnessCorrection("Invert Smoothness", Float) = 0.0
 
-		// Material properties for the sand layer.
+		// Material properties for the sand layer. See above for their descriptions.
 		[Header(Sand)]
+		Sand_MinimumHeight("Minimum Height", Float) = 0.0
+		Sand_MaximumHeight("Maximum Height", Float) = 0.0
+		Sand_Distance("Distance", Float) = 0.0
+		Sand_Depth("Depth", Float) = 1.0
+		[Space]
 		[NoScaleOffset] Sand_AlbedoTexture("Albedo", 2D) = "white" {}
 		[NoScaleOffset] Sand_NormalTexture("Normal", 2D) = "bump" {}
 		[NoScaleOffset] Sand_SurfaceTexture("Metallic (R), Smoothness (G), and Height (B)", 2D) = "black" {}
 		Sand_TextureScale("Scale", Float) = 1.0
+		[Space]
 		[ToggleOff] Sand_BitangentCorrection("Invert Green Channel of Normal", Float) = 0.0
 		[ToggleOff] Sand_SmoothnessCorrection("Invert Smoothness", Float) = 0.0
 
-		// Material properties for the dirt layer.
+		// Material properties for the dirt layer. See above for their descriptions.
 		[Header(Dirt)]
 		[NoScaleOffset] Dirt_AlbedoTexture("Albedo", 2D) = "white" {}
 		[NoScaleOffset] Dirt_NormalTexture("Normal", 2D) = "bump" {}
 		[NoScaleOffset] Dirt_SurfaceTexture("Metallic (R), Smoothness (G), and Height (B)", 2D) = "black" {}
 		Dirt_TextureScale("Scale", Float) = 1.0
+		[Space]
 		[ToggleOff] Dirt_BitangentCorrection("Invert Green Channel of Normal", Float) = 0.0
 		[ToggleOff] Dirt_SmoothnessCorrection("Invert Smoothness", Float) = 0.0
 
-		// Material properties for the grass layer.
+		// Material properties for the grass layer. See above for their descriptions.
 		[Header(Grass)]
 		[NoScaleOffset] Grass_AlbedoTexture("Albedo", 2D) = "white" {}
 		[NoScaleOffset] Grass_NormalTexture("Normal", 2D) = "bump" {}
 		[NoScaleOffset] Grass_SurfaceTexture("Metallic (R), Smoothness (G), and Height (B)", 2D) = "black" {}
 		Grass_TextureScale("Scale", Float) = 1.0
+		[Space]
 		[ToggleOff] Grass_BitangentCorrection("Invert Green Channel of Normal", Float) = 0.0
 		[ToggleOff] Grass_SmoothnessCorrection("Invert Smoothness", Float) = 0.0
 
-		// Material properties for the snow layer.
+		// Material properties for the snow layer. See above for their descriptions.
 		[Header(Snow)]
 		[NoScaleOffset] Snow_AlbedoTexture("Albedo", 2D) = "white" {}
 		[NoScaleOffset] Snow_NormalTexture("Normal", 2D) = "bump" {}
 		[NoScaleOffset] Snow_SurfaceTexture("Metallic (R), Smoothness (G), and Height (B)", 2D) = "black" {}
 		Snow_TextureScale("Scale", Float) = 1.0
+		[Space]
 		[ToggleOff] Snow_BitangentCorrection("Invert Green Channel of Normal", Float) = 0.0
 		[ToggleOff] Snow_SmoothnessCorrection("Invert Smoothness", Float) = 0.0
 	}
@@ -77,7 +87,6 @@ Shader "Planet/Surface" {
 			sampler2D Rock_AlbedoTexture;
 			sampler2D Rock_NormalTexture;
 			sampler2D Rock_SurfaceTexture;
-
 			float Rock_TextureScale;
 
 			float Rock_BitangentCorrection;
@@ -85,10 +94,14 @@ Shader "Planet/Surface" {
 
 
 			// Material properties for the sand layer. See above for their descriptions.
+			float Sand_MinimumHeight;
+			float Sand_MaximumHeight;
+			float Sand_Distance;
+			float Sand_Depth;
+
 			sampler2D Sand_AlbedoTexture;
 			sampler2D Sand_NormalTexture;
 			sampler2D Sand_SurfaceTexture;
-
 			float Sand_TextureScale;
 
 			float Sand_BitangentCorrection;
@@ -99,7 +112,6 @@ Shader "Planet/Surface" {
 			sampler2D Dirt_AlbedoTexture;
 			sampler2D Dirt_NormalTexture;
 			sampler2D Dirt_SurfaceTexture;
-
 			float Dirt_TextureScale;
 
 			float Dirt_BitangentCorrection;
@@ -110,7 +122,6 @@ Shader "Planet/Surface" {
 			sampler2D Grass_AlbedoTexture;
 			sampler2D Grass_NormalTexture;
 			sampler2D Grass_SurfaceTexture;
-
 			float Grass_TextureScale;
 
 			float Grass_BitangentCorrection;
@@ -121,7 +132,6 @@ Shader "Planet/Surface" {
 			sampler2D Snow_AlbedoTexture;
 			sampler2D Snow_NormalTexture;
 			sampler2D Snow_SurfaceTexture;
-
 			float Snow_TextureScale;
 
 			float Snow_BitangentCorrection;
@@ -159,7 +169,7 @@ Shader "Planet/Surface" {
 				disableTangentSpaceTransformation(data);
 			}
 
-			
+
 			/**
 			 * The surface shader.
 			 */
@@ -173,15 +183,28 @@ Shader "Planet/Surface" {
 
 				// TODO Sample the layers.
 				float3 color = float3(0.0, 0.0, 0.0);
-				float3 normal = float3(0.0, 0.0, 0.0);
+				float3 normal = float3(0.0, 0.0, 1.0);
 				float3 surface = float3(0.0, 0.0, 0.0);
 
-				color += sampleLayerColor(position, Sand_TextureScale, Sand_AlbedoTexture, weights);
-				normal += sampleLayerNormal(position, Sand_TextureScale, Sand_NormalTexture, Sand_BitangentCorrection, surfaceNormal, weights);
-				surface += sampleLayerColor(position, Sand_TextureScale, Sand_SurfaceTexture, weights);
+				float3 rockColor = sampleLayerColor(position, Rock_TextureScale, Rock_AlbedoTexture, weights);
+				//normal += sampleLayerNormal(position, Rock_TextureScale, Rock_NormalTexture, Rock_BitangentCorrection, surfaceNormal, weights);
+				float3 rockSurface = sampleLayerColor(position, Rock_TextureScale, Rock_SurfaceTexture, weights);
+
+				float3 sandColor = sampleLayerColor(position, Sand_TextureScale, Sand_AlbedoTexture, weights);
+				//normal += sampleLayerNormal(position, Sand_TextureScale, Sand_NormalTexture, Sand_BitangentCorrection, surfaceNormal, weights);
+				float3 sandSurface = sampleLayerColor(position, Sand_TextureScale, Sand_SurfaceTexture, weights);
+
+				// TODO fix
+				//correctSurfaceSmoothness(surface, Rock_SmoothnessCorrection);
+
+				float height = length(position);
+
+				float alpha = saturate(0.5 + (height - Sand_MinimumHeight) / Sand_Distance);
+
+				color = heightBlend(rockColor, sampleSurfaceHeight(rockSurface), sandColor, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
 
 				// Correct the smoothness inside the surface vector so we can combine the properties component-wise.
-				correctSurfaceSmoothness(surface, Sand_SmoothnessCorrection);
+				//correctSurfaceSmoothness(surface, Sand_SmoothnessCorrection);
 
 				normal = normalize(normal);
 
