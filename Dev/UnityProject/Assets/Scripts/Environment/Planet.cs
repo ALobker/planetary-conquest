@@ -25,7 +25,7 @@ public class Planet : MonoBehaviour {
 		// allow every layer in height shader to work off the water level (toggle)
 		// introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle)
 		// slope in degrees, one arccos and one dotproduct -> multiply alpha with height alpha
-		// atmosphere + atmospheric haze + queue fiddling
+		// atmosphere + atmospheric haze + queue fiddling + clouds?
 		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
 		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting? => hue setting (desaturate first?) or use fancier textures (toggle)) + water depth (bluer/darker when deeper)
 		// random texture selection
