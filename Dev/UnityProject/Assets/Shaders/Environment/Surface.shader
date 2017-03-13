@@ -181,11 +181,15 @@ Shader "Planet/Surface" {
 				// Get a measure of how much each cardinal axis contributes to the surface normal.
 				float3 weights = calculateWeights(surfaceNormal);
 
-				// TODO Sample the layers.
-				float3 color = float3(0.0, 0.0, 0.0);
-				float3 normal = float3(0.0, 0.0, 1.0);
-				float3 surface = float3(0.0, 0.0, 0.0);
+				// Start with some default layer properties. This should be entirely overridden by
+				// the first layer if everything is set up right, but just in case it's not, you
+				// get a simple grey surface. It also keeps the rock layer symmetric with the other
+				// layers in terms of properties and code paths.
+				float3 color = float3(0.5, 0.5, 0.5);
+				float3 normal = surfaceNormal;
+				float3 surface = float3(0.0, 0.0, 0.5);
 
+				// TODO Sample the layers.
 				float3 rockColor = sampleLayerColor(position, Rock_TextureScale, Rock_AlbedoTexture, weights);
 				//normal += sampleLayerNormal(position, Rock_TextureScale, Rock_NormalTexture, Rock_BitangentCorrection, surfaceNormal, weights);
 				float3 rockSurface = sampleLayerColor(position, Rock_TextureScale, Rock_SurfaceTexture, weights);
