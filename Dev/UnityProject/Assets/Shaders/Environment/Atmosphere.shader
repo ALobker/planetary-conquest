@@ -11,7 +11,7 @@
 		LOD 200
 		
 		CGPROGRAM
-			#pragma surface surf Bla alpha vertex:vert 
+			#pragma surface surf Standard alpha vertex:vert
 			#pragma target 3.0
 			
 			const int NumberOfIntegrationIntervals = 16;
@@ -35,10 +35,6 @@
 
 				input.position = data.vertex.xyz;
 				input.viewDirection = normalize(ObjSpaceViewDir(data.vertex));
-			}
-			
-			fixed4 LightingBla(SurfaceOutput s, float3 lightDir, float atten) {
-				return fixed4(s.Albedo, s.Alpha);
 			}
 
 			float calculateDensity(float midPointHeight, float angle) {
@@ -71,7 +67,7 @@
 				return density * 2.0;
 			}
 
-			void surf(Input input, inout SurfaceOutput/*Standard*/ output) {
+			void surf(Input input, inout SurfaceOutputStandard output) {
 				float3 position = input.position;
 				float3 viewDirection = input.viewDirection;
 
@@ -84,8 +80,6 @@
 
 				float altitude = lowestHeight - SurfaceHeight;
 
-
-
 				float density = integrate(halfDistance, altitude);
 
 				float atmosphere = density * Density;
@@ -96,11 +90,11 @@
 				// This will make the atmosphere disappear on the other side of transparent water, but I reckon it won't be noticable.
 				// Light integration should be the same in both cases too.
 				// Look up Rayleigh scatttering.
+				// Maybe clouds? Could try involving white colored noise in the integration.
 
 				float3 color = AirColor.rgb;
 				float transparency = saturate(atmosphere);
 
-				//output.Emission = color;
 				output.Albedo = color;
 				output.Alpha = clamp(transparency, MinimumTransparency, MaximumTransparency);
 			}
