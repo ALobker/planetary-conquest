@@ -52,9 +52,9 @@
 				float3 position = input.position;
 				float3 normal = input.normal;
 
-				float angleXY = abs(dot(normal, float3(0.0f, 0.0f, 1.0)));
-				float angleYZ = abs(dot(normal, float3(1.0f, 0.0f, 0.0)));
-				float angleZX = abs(dot(normal, float3(0.0f, 1.0f, 0.0)));
+				float angleXY = abs(dot(normal, float3(0.0, 0.0, 1.0)));
+				float angleYZ = abs(dot(normal, float3(1.0, 0.0, 0.0)));
+				float angleZX = abs(dot(normal, float3(0.0, 1.0, 0.0)));
 
 				float angleSum = angleXY + angleYZ + angleZX;
 
@@ -64,7 +64,7 @@
 
 				float3 waterCoordinates = position / WaterScale;
 
-				fixed3 waterColor = 0.0f;
+				fixed3 waterColor = 0.0;
 
 				waterColor += tex2D(WaterTexture, waterCoordinates.xy) * weightXY;
 				waterColor += tex2D(WaterTexture, waterCoordinates.yz) * weightYZ;
@@ -72,7 +72,7 @@
 
 				float3 foamCoordinates = position / FoamScale;
 
-				fixed3 foamColor = 0.0f;
+				fixed3 foamColor = 0.0;
 
 				foamColor += tex2D(FoamTexture, foamCoordinates.xy) * weightXY;
 				foamColor += tex2D(FoamTexture, foamCoordinates.yz) * weightYZ;

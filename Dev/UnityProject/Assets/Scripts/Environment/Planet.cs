@@ -14,13 +14,20 @@ public class Planet : MonoBehaviour {
 	public bool generateWater = true;
 	public bool generateAtmosphere = true;
 
+	[Header("Debug")]
+	public bool enableInputControls = false;
+
 
 	private void Start() {
 		// height shader
 		// slope shader
-		// atmosphere + atmospheric haze + queue fiddling + height stuff in the shader updated through updateMaterial()
+		// use scale as minimum/maximum in height shader and work off average height
+		// allow every layer in height shader to work off the water level (toggle)
+		// introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle)
+		// slope in degrees, one arccos and one dotproduct -> multiply alpha with height alpha
+		// atmosphere + atmospheric haze + queue fiddling + clouds?
 		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
-		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting?) + water depth (bluer/darker when deeper)
+		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting? => hue setting (desaturate first?) or use fancier textures (toggle)) + water depth (bluer/darker when deeper)
 		// random texture selection
 		// moon and asteroid prefabs
 		
@@ -64,88 +71,91 @@ public class Planet : MonoBehaviour {
 
 
 	private void Update() {
-		// Generation controls.
-		if(Input.GetKeyDown(KeyCode.H)) {
-			surface.generate();
-		}
-
-		if(Input.GetKeyDown(KeyCode.J)) {
-			if(featuresWater) {
-				water.generate();
+		// This is a debug feature.
+		if(enableInputControls) {
+			// Generation controls.
+			if(Input.GetKeyDown(KeyCode.H)) {
+				surface.generate();
 			}
-		}
 
-		if(Input.GetKeyDown(KeyCode.K)) {
-			if(featuresAtmosphere) {
-				atmosphere.generate();
+			if(Input.GetKeyDown(KeyCode.J)) {
+				if(featuresWater) {
+					water.generate();
+				}
 			}
-		}
 
-		// Update material controls.
-		if(Input.GetKeyDown(KeyCode.B)) {
-			surface.updateMaterial();
-		}
-
-		if(Input.GetKeyDown(KeyCode.N)) {
-			if(featuresWater) {
-				water.updateMaterial();
+			if(Input.GetKeyDown(KeyCode.K)) {
+				if(featuresAtmosphere) {
+					atmosphere.generate();
+				}
 			}
-		}
 
-		if(Input.GetKeyDown(KeyCode.M)) {
-			if(featuresAtmosphere) {
-				atmosphere.updateMaterial();
+			// Update material controls.
+			if(Input.GetKeyDown(KeyCode.B)) {
+				surface.updateMaterial();
 			}
-		}
 
-		// Individual surface generation controls.
-		if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
-			surface.crater();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
-			surface.fault();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadMultiply)) {
-			surface.exaggerate();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
-			surface.smooth();
-		}
-
-		if(Input.GetKeyDown(KeyCode.KeypadPeriod)) {
-			surface.calculateNormals();
-		}
-
-		if(Input.GetKeyDown(KeyCode.Keypad0)) {
-			surface.calculateAverage();
-		}
-
-		// Individual water generation controls.
-		if(Input.GetKeyDown(KeyCode.Equals)) {
-			if(featuresWater) {
-				water.increaseLevel();
+			if(Input.GetKeyDown(KeyCode.N)) {
+				if(featuresWater) {
+					water.updateMaterial();
+				}
 			}
-		}
 
-		if(Input.GetKeyDown(KeyCode.Minus)) {
-			if(featuresWater) {
-				water.decreaseLevel();
+			if(Input.GetKeyDown(KeyCode.M)) {
+				if(featuresAtmosphere) {
+					atmosphere.updateMaterial();
+				}
 			}
-		}
 
-		// Individual atmosphere generation controls.
-		if(Input.GetKeyDown(KeyCode.LeftBracket)) {
-			if(featuresAtmosphere) {
-				atmosphere.increaseHeight();
+			// Individual surface generation controls.
+			if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
+				surface.crater();
 			}
-		}
 
-		if(Input.GetKeyDown(KeyCode.RightBracket)) {
-			if(featuresAtmosphere) {
-				atmosphere.decreaseHeight();
+			if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
+				surface.fault();
+			}
+
+			if(Input.GetKeyDown(KeyCode.KeypadMultiply)) {
+				surface.exaggerate();
+			}
+
+			if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
+				surface.smooth();
+			}
+
+			if(Input.GetKeyDown(KeyCode.KeypadPeriod)) {
+				surface.calculateNormals();
+			}
+
+			if(Input.GetKeyDown(KeyCode.Keypad0)) {
+				surface.calculateAverage();
+			}
+
+			// Individual water generation controls.
+			if(Input.GetKeyDown(KeyCode.Equals)) {
+				if(featuresWater) {
+					water.increaseLevel();
+				}
+			}
+
+			if(Input.GetKeyDown(KeyCode.Minus)) {
+				if(featuresWater) {
+					water.decreaseLevel();
+				}
+			}
+
+			// Individual atmosphere generation controls.
+			if(Input.GetKeyDown(KeyCode.LeftBracket)) {
+				if(featuresAtmosphere) {
+					atmosphere.increaseHeight();
+				}
+			}
+
+			if(Input.GetKeyDown(KeyCode.RightBracket)) {
+				if(featuresAtmosphere) {
+					atmosphere.decreaseHeight();
+				}
 			}
 		}
 	}
