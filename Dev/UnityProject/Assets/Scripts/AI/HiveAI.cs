@@ -9,6 +9,7 @@ using UnityEngine;
 public class HiveAI : MonoBehaviour
 {
     public CampScript camp;
+    public bool tutorial = false;
 
     public float neutralFactor = 1;
     public float enemyFactor = 0.5f;
@@ -43,7 +44,7 @@ public class HiveAI : MonoBehaviour
     // determine which neighbour should be approached
     private void setArrow()
     {
-        if (camp.faction == 0 || camp.faction == 1) //no ai for neutral or player
+        if (tutorial || camp.faction == 0 || camp.faction == 1) //no ai for neutral or player
             return;
         if (camp.faction != camp.armyFaction || camp.numUnits < 5f)
         {

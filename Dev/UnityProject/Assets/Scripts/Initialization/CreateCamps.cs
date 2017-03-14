@@ -71,7 +71,7 @@ public class CreateCamps : MonoBehaviour
         }*/
     }
 
-    public void CreateAllCamps()
+    public void CreateAllCamps(bool tutorial = false)
     {
         List<Vector3> points = new List<Vector3>(numCamps);
         List<int[]> neighbours = new List<int[]>(numCamps);
@@ -165,6 +165,7 @@ public class CreateCamps : MonoBehaviour
 
             HiveAI ai = newCamp.AddComponent<HiveAI>();
             ai.camp = cs;
+            ai.tutorial = tutorial;
 
             camps.Add(cs);
         }
@@ -179,12 +180,23 @@ public class CreateCamps : MonoBehaviour
             }
         }
 
+        int playerIndex = 0;
         //select a few bases as starting positions
-        //create an array and shuffle it
-        int[] indexes = Enumerable.Range(0, camps.Count).OrderBy(x => UnityEngine.Random.Range(0, 1f)).ToArray();
-        for (int i = 0; i < GameManager.numPlayers; i++)
+        if (!tutorial)
         {
-            camps[indexes[i]].faction = i + 1;
+            //create an array and shuffle it
+            int[] indexes = Enumerable.Range(0, camps.Count).OrderBy(x => UnityEngine.Random.Range(0, 1f)).ToArray();
+            playerIndex = indexes[0];
+            for (int i = 0; i < GameManager.numPlayers && i < camps.Count; i++)
+            {
+                camps[indexes[i]].faction = i + 1;
+            }
+        }
+        else
+        {
+            camps[0].faction = 1;
+            camps[5].faction = 2;
+            camps[11].faction = 3;
         }
 
         //drawFrom = new List<Vector3>();
@@ -194,7 +206,7 @@ public class CreateCamps : MonoBehaviour
         DrawBordersAlternative(camps);
 
         //set camera for player
-        Vector3 cameraPos = camps[indexes[0]].transform.position.normalized * 20f;
+        Vector3 cameraPos = camps[playerIndex].transform.position.normalized * 20f;
         Camera.main.transform.position = cameraPos;
         Camera.main.transform.LookAt(Vector3.zero, Vector3.up);
         OrbitCamera orb = Camera.main.GetComponent<OrbitCamera>();
