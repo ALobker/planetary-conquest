@@ -116,6 +116,20 @@ float3 sampleNormal(sampler2D normals, float2 coordinates, float bitangentCorrec
 	return flip(normalInObjectSpace, stretch(dot(surfaceNormal, normal)), normal);
 }
 
+/**
+ * Samples the surface properties from the texture using the specified coordinates, and inverts the
+ * smoothness if requested.
+ */
+float3 sampleSurface(sampler2D surfaces, float2 coordinates, float smoothnessCorrection) {
+	// Since the surface properties are stored per channel, we can just sample their combination instead.
+	float3 surface = sampleColor(surfaces, coordinates);
+
+	// Invert the smoothness if requested.
+	surface.g = correctSmoothness(surface.g, smoothnessCorrection);
+
+	return surface;
+}
+
 
 /**
  * Samples a color from the texture using a three dimensional interpolation based on the weights.
@@ -163,6 +177,23 @@ float3 sampleLayerNormal(float3 position, float scale, sampler2D normals, float 
 	return stretch(dot(normal, surfaceNormal)) * normal;
 }
 
+/**
+* Samples surface properties from the texture using a three dimensional interpolation based on the weights.
+*/
+float3 sampleLayerSurface(float3 position, float scale, sampler2D surfaces, float smoothnessCorrection, float3 weights) {
+	// Repeat the texture according to the supplied scale.
+	float3 coordinates = position / scale;
+
+	// Take the weighted average of the three sampled values.
+	float3 surface = float3(0.0, 0.0, 0.0);
+
+	surface += sampleSurface(surfaces, coordinates.xy, smoothnessCorrection) * weights.z;
+	surface += sampleSurface(surfaces, coordinates.yz, smoothnessCorrection) * weights.x;
+	surface += sampleSurface(surfaces, coordinates.zx, smoothnessCorrection) * weights.y;
+
+	return surface;
+}
+
 
 /**
  * Samples the metal from the surface vector.
@@ -183,14 +214,6 @@ float sampleSurfaceSmoothness(float3 surface) {
  */
 float sampleSurfaceHeight(float3 surface) {
 	return surface.b;
-}
-
-
-/**
- * Inverts the smoothness in the surface vector if requested.
- */
-void correctSurfaceSmoothness(inout float3 surface, float smoothnessCorrection) {
-	surface.g = correctSmoothness(surface.g, smoothnessCorrection);
 }
 
 

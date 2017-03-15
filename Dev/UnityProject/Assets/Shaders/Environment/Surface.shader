@@ -182,35 +182,39 @@ Shader "Planet/Surface" {
 				float3 weights = calculateWeights(surfaceNormal);
 
 				// Start with some default layer properties. This should be entirely overridden by
-				// the first layer if everything is set up right, but just in case it's not, you
-				// get a simple grey surface. It also keeps the rock layer symmetric with the other
+				// the rock layer if everything is set up right, but just in case it's not, you get
+				// a simple grey surface. It also keeps the rock layer symmetric with the other
 				// layers in terms of properties and code paths.
 				float3 color = float3(0.5, 0.5, 0.5);
 				float3 normal = surfaceNormal;
 				float3 surface = float3(0.0, 0.0, 0.5);
 
-				// TODO Sample the layers.
+				// TODO Sample all the layers. Combine them iteratively, with the resulting values replacing the previous ones each time.
 				float3 rockColor = sampleLayerColor(position, Rock_TextureScale, Rock_AlbedoTexture, weights);
-				//normal += sampleLayerNormal(position, Rock_TextureScale, Rock_NormalTexture, Rock_BitangentCorrection, surfaceNormal, weights);
-				float3 rockSurface = sampleLayerColor(position, Rock_TextureScale, Rock_SurfaceTexture, weights);
+				float3 rockNormal = sampleLayerNormal(position, Rock_TextureScale, Rock_NormalTexture, Rock_BitangentCorrection, surfaceNormal, weights);
+				float3 rockSurface = sampleLayerSurface(position, Rock_TextureScale, Rock_SurfaceTexture, Rock_SmoothnessCorrection, weights);
 
 				float3 sandColor = sampleLayerColor(position, Sand_TextureScale, Sand_AlbedoTexture, weights);
-				//normal += sampleLayerNormal(position, Sand_TextureScale, Sand_NormalTexture, Sand_BitangentCorrection, surfaceNormal, weights);
-				float3 sandSurface = sampleLayerColor(position, Sand_TextureScale, Sand_SurfaceTexture, weights);
+				float3 sandNormal = sampleLayerNormal(position, Sand_TextureScale, Sand_NormalTexture, Sand_BitangentCorrection, surfaceNormal, weights);
+				float3 sandSurface = sampleLayerSurface(position, Sand_TextureScale, Sand_SurfaceTexture, Sand_SmoothnessCorrection, weights);
 
-				// TODO fix
-				//correctSurfaceSmoothness(surface, Rock_SmoothnessCorrection);
-
+				// TODO Use scales off average height in these calculations instead.
 				float height = length(position);
 
 				float alpha = saturate(0.5 + (height - Sand_MinimumHeight) / Sand_Distance);
 
+				// TODO Other end.
+
+				// TODO Both ends of the slopes too. Multiply to get final alpha.
+
+				// TODO Incorporate water level toggle.
+
+				// TODO Incorporate noise toggles?
+
+				// TODO Normal and surface versions of the height blend. Surface version is just an overload to the color version.
 				color = heightBlend(rockColor, sampleSurfaceHeight(rockSurface), sandColor, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
-
-				// Correct the smoothness inside the surface vector so we can combine the properties component-wise.
-				//correctSurfaceSmoothness(surface, Sand_SmoothnessCorrection);
-
-				normal = normalize(normal);
+				//normal = heightBlend(rockNormal, sampleSurfaceHeight(rockSurface), sandNormal, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
+				//surface = heightBlend(rockSurface, sampleSurfaceHeight(rockSurface), sandSurface, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
 
 				// The surface properties have conveniently been combined component-wise inside the
 				// surface vector, so now we can retrieve them.
