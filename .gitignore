@@ -31,3 +31,6 @@ sysinfo.txt
 
 # Blender generated files
 *.blend1
+
+# Substance Designer generated files
+.autosave/
