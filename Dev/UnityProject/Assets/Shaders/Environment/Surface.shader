@@ -211,10 +211,9 @@ Shader "Planet/Surface" {
 
 				// TODO Incorporate noise toggles?
 
-				// TODO Normal and surface versions of the height blend. Surface version is just an overload to the color version.
-				color = heightBlend(rockColor, sampleSurfaceHeight(rockSurface), sandColor, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
-				//normal = heightBlend(rockNormal, sampleSurfaceHeight(rockSurface), sandNormal, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
-				//surface = heightBlend(rockSurface, sampleSurfaceHeight(rockSurface), sandSurface, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
+				color = blendLayerColors(rockColor, sampleSurfaceHeight(rockSurface), sandColor, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
+				normal = blendLayerNormals(rockNormal, sampleSurfaceHeight(rockSurface), sandNormal, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
+				surface = blendLayerSurfaces(rockSurface, sampleSurfaceHeight(rockSurface), sandSurface, sampleSurfaceHeight(sandSurface), Sand_Depth, alpha);
 
 				// The surface properties have conveniently been combined component-wise inside the
 				// surface vector, so now we can retrieve them.

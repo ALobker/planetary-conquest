@@ -223,7 +223,7 @@ float sampleSurfaceHeight(float3 surface) {
  * Based on http://www.gamasutra.com/blogs/AndreyMishkinis/20130716/196339/Advanced_Terrain_Texture_Splatting.php,
  * but truncates the depth to the alpha value so height blending does not occur outside of the interpolation interval.
  */
-float3 heightBlend(float3 color1, float height1, float3 color2, float height2, float depth, float alpha) {
+float3 blendLayerColors(float3 color1, float height1, float3 color2, float height2, float depth, float alpha) {
 	// Vectorize the weights.
 	float2 heights = float2(height1, height2);
 	float2 alphas = float2(1.0 - alpha, alpha);
@@ -243,4 +243,28 @@ float3 heightBlend(float3 color1, float height1, float3 color2, float height2, f
 
 	// Interpolate between the two colors based on the adjusted weights.
 	return (color1 * weights.x + color2 * weights.y) / (weights.x + weights.y);
+}
+
+/**
+* Performs a height-adjusted linear blend between the two normals.
+* 
+* See above for more details regarding the implementation.
+*/
+float3 blendLayerNormals(float3 normal1, float height1, float3 normal2, float height2, float depth, float alpha) {
+	// Blending normals is just a component-wise weighted interpolation. This is exactly what is
+	// used to blend colors, so we can overload to that. Color weights are also normalized, which
+	// is not necessary for normals as we normalize them to unit length anyways, but we still
+	// overload to reduce code duplication.
+	return normalize(blendLayerColors(normal1, height1, normal2, height2, depth, alpha));
+}
+
+/**
+* Performs a height-adjusted linear blend between the two surfaces.
+* 
+* See above for more details regarding the implementation.
+*/
+float3 blendLayerSurfaces(float3 surface1, float height1, float3 surface2, float height2, float depth, float alpha) {
+	// Blending surfaces is just a component-wise weighted interpolation. This is exactly what is
+	// used to blend colors, so we can overload to that.
+	return blendLayerColors(surface1, height1, surface2, height2, depth, alpha);
 }
