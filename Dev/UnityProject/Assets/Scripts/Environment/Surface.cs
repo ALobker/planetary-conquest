@@ -45,8 +45,15 @@ public class Surface : MonoBehaviour {
 	private int[][] neighbourTriangles;
 	private int[][] neighbourVertices;
 
+	private float radius;
 	private float average;
 
+
+	public float Radius {
+		get {
+			return radius;
+		}
+	}
 
 	public float Average {
 		get {
@@ -86,10 +93,18 @@ public class Surface : MonoBehaviour {
 	}
 
 	public void updateMaterial() {
-		//MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-		//Material material = meshRenderer.material;
+		MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+		Material material = meshRenderer.material;
 
-		//material.SetFloat("WaterLevel", planet.water.Level);
+		material.SetFloat("SurfaceRadius", radius);
+		material.SetFloat("SurfaceHeight", average);
+
+		if(planet.featuresWater) {
+			material.SetFloat("WaterHeight", average * planet.water.Level);
+		}
+		else {
+			material.SetFloat("WaterHeight", average);
+		}
 	}
 
 
@@ -217,7 +232,7 @@ public class Surface : MonoBehaviour {
 		int[] triangles = mesh.triangles;
 		Vector3[] vertices = mesh.vertices;
 
-		float radius = Random.Range(minimumRadius, maximumRadius);
+		radius = Random.Range(minimumRadius, maximumRadius);
 
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
