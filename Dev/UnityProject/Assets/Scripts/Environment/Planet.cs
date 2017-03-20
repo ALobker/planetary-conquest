@@ -19,6 +19,7 @@ public class Planet : MonoBehaviour {
 
 
 	private void Start() {
+		// Underflattening/overflattening? Could create smoother beaches and flatter areas, as well as more pronounced mountains. Basically it's erosion. Use S curve to adjust scale from average height (i.e. like exaggeration). Requires minimum/maximum surface height to be calculated as well?
 		// introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle) -> noise() apparently doesn't work on most graphic cards
 		// atmosphere + atmospheric haze + queue fiddling + clouds? (but no noise()... :( )
 		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
