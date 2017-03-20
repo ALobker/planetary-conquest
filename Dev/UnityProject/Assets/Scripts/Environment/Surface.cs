@@ -11,24 +11,24 @@ public class Surface : MonoBehaviour {
 	public int minimumNumberOfCraters = 100;
 	public int maximumNumberOfCraters = 100;
 
-	public float minimumCraterRadius = 60.0f;
-	public float maximumCraterRadius = 600.0f;
+	public float minimumCraterRadius = 0.06f;
+	public float maximumCraterRadius = 0.6f;
 
-	public float minimumCraterScale = 0.995f;
-	public float maximumCraterScale = 1.005f;
+	public float minimumCraterHeight = 0.995f;
+	public float maximumCraterHeight = 1.005f;
 
 	public float minimumCraterDistance = 0.0f;
-	public float maximumCraterDistance = 20.0f;
+	public float maximumCraterDistance = 0.02f;
 
 	[Header("Fault")]
 	public int minimumNumberOfFaults = 0;
 	public int maximumNumberOfFaults = 0;
 
-	public float minimumFaultScale = 0.996f;
-	public float maximumFaultScale = 1.004f;
+	public float minimumFaultHeight = 0.996f;
+	public float maximumFaultHeight = 1.004f;
 
 	public float minimumFaultDistance = 0.0f;
-	public float maximumFaultDistance = 10.0f;
+	public float maximumFaultDistance = 0.01f;
 
 	[Header("Smooth")]
 	public int minimumNumberOfSmooths = 2;
@@ -254,8 +254,8 @@ public class Surface : MonoBehaviour {
 		
 		Vector3 craterNormal = Random.onUnitSphere;
 
-		float craterRadius = Random.Range(minimumCraterRadius, maximumCraterRadius);
-		float craterScale = Random.Range(minimumCraterScale, maximumCraterScale);
+		float craterRadius = Random.Range(minimumCraterRadius, maximumCraterRadius) * radius;
+		float craterHeight = Random.Range(minimumCraterHeight, maximumCraterHeight);
 		
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
@@ -270,15 +270,18 @@ public class Surface : MonoBehaviour {
 			bool inside = length < craterRadius;
 			
 			float sign = ahead && inside ? 1 : -1;
-			float signedScale = Mathf.Pow(craterScale, sign);
+			float signedHeight = Mathf.Pow(craterHeight, sign);
 
-			float distance = ahead ? Mathf.Abs(craterRadius - length) : maximumCraterDistance;
-			float clampedDistance = Mathf.Clamp(distance, minimumCraterDistance, maximumCraterDistance);
+			float minimumDistance = minimumCraterDistance * radius;
+			float maximumDistance = maximumCraterDistance * radius;
 
-			float interpolation = (clampedDistance - minimumCraterDistance) / (maximumCraterDistance - minimumCraterDistance);
-			float interpolatedScale = signedScale + (1.0f - interpolation) * (1.0f - signedScale);
+			float distance = ahead ? Mathf.Abs(craterRadius - length) : maximumDistance;
+			float clampedDistance = Mathf.Clamp(distance, minimumDistance, maximumDistance);
 
-			vertex *= interpolatedScale;
+			float interpolation = (clampedDistance - minimumDistance) / (maximumDistance - minimumDistance);
+			float interpolatedHeight = signedHeight + (1.0f - interpolation) * (1.0f - signedHeight);
+
+			vertex *= interpolatedHeight;
 			
 			vertices[vertexIndex] = vertex;
 		}
@@ -295,21 +298,24 @@ public class Surface : MonoBehaviour {
 		Vector3 faultPlaneNormal = Random.onUnitSphere;
 		Plane faultPlane = new Plane(faultPlaneNormal, 0.0f);
 
-		float faultScale = Random.Range(minimumFaultScale, maximumFaultScale);
+		float faultHeight = Random.Range(minimumFaultHeight, maximumFaultHeight) * radius;
 
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
 
 			float sign = faultPlane.GetSide(vertex) ? 1 : -1;
-			float signedScale = Mathf.Pow(faultScale, sign);
+			float signedHeight = Mathf.Pow(faultHeight, sign);
+
+			float minimumDistance = minimumFaultDistance * radius;
+			float maximumDistance = maximumFaultDistance * radius;
 
 			float distance = Mathf.Abs(faultPlane.GetDistanceToPoint(vertex));
-			float clampedDistance = Mathf.Clamp(distance, minimumFaultDistance, maximumFaultDistance);
+			float clampedDistance = Mathf.Clamp(distance, minimumDistance, maximumDistance);
 
-			float interpolation = (clampedDistance - minimumFaultDistance) / (maximumFaultDistance - minimumFaultDistance);
-			float interpolatedScale = signedScale + (1.0f - interpolation) * (1.0f - signedScale);
+			float interpolation = (clampedDistance - minimumDistance) / (maximumDistance - minimumDistance);
+			float interpolatedHeight = signedHeight + (1.0f - interpolation) * (1.0f - signedHeight);
 
-			vertex *= interpolatedScale;
+			vertex *= interpolatedHeight;
 
 			vertices[vertexIndex] = vertex;
 		}
