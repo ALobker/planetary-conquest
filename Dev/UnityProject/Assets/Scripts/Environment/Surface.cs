@@ -46,12 +46,28 @@ public class Surface : MonoBehaviour {
 	private int[][] neighbourVertices;
 
 	private float radius;
+
+	private float minimum;
+	private float maximum;
+
 	private float average;
 
 
 	public float Radius {
 		get {
 			return radius;
+		}
+	}
+
+	public float Minimum {
+		get {
+			return minimum;
+		}
+	}
+
+	public float Maximum {
+		get {
+			return maximum;
 		}
 	}
 
@@ -66,7 +82,7 @@ public class Surface : MonoBehaviour {
 		findNeighbours();
 		initializeSize();
 
-		calculateAverage();
+		calculateBounds();
 	}
 
 	public void generate() {
@@ -80,7 +96,7 @@ public class Surface : MonoBehaviour {
 			fault();
 		}
 		
-		calculateAverage();
+		calculateBounds();
 		exaggerate();
 
 		int numberOfSmooths = Random.Range(minimumNumberOfSmooths, maximumNumberOfSmooths);
@@ -89,7 +105,7 @@ public class Surface : MonoBehaviour {
 		}
 
 		calculateNormals();
-		calculateAverage();
+		calculateBounds();
 	}
 
 	public void updateMaterial() {
@@ -229,7 +245,6 @@ public class Surface : MonoBehaviour {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 		
-		int[] triangles = mesh.triangles;
 		Vector3[] vertices = mesh.vertices;
 
 		radius = Random.Range(minimumRadius, maximumRadius);
@@ -354,7 +369,6 @@ public class Surface : MonoBehaviour {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 		
-		int[] triangles = mesh.triangles;
 		Vector3[] vertices = mesh.vertices;
 		
 		float underExaggeration = Random.Range(minimumUnderExaggeration, maximumUnderExaggeration);
@@ -411,17 +425,29 @@ public class Surface : MonoBehaviour {
 		mesh.normals = normals;
 	}
 
-	public void calculateAverage() {
+	public void calculateBounds() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
 		Mesh mesh = meshFilter.mesh;
 		
-		int[] triangles = mesh.triangles;
 		Vector3[] vertices = mesh.vertices;
 		
+		minimum = float.MaxValue;
+		maximum = float.MinValue;
+
 		float total = 0.0f;
 
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
-			total += vertices[vertexIndex].magnitude;
+			float height = vertices[vertexIndex].magnitude;
+
+			if(height < minimum) {
+				minimum = height;
+			}
+
+			if(height > maximum) {
+				maximum = height;
+			}
+
+			total += height;
 		}
 
 		average = total / vertices.Length;
