@@ -41,6 +41,13 @@ public class Surface : MonoBehaviour {
 	public float minimumOverExaggeration = 2.0f;
 	public float maximumOverExaggeration = 4.0f;
 
+	[Header("Erosion")]
+	public float minimumUnderErosion = 0.0f;
+	public float maximumUnderErosion = 0.0f;
+
+	public float minimumOverErosion = 0.0f;
+	public float maximumOverErosion = 0.0f;
+
 	
 	private int[][] neighbourTriangles;
 	private int[][] neighbourVertices;
@@ -379,6 +386,36 @@ public class Surface : MonoBehaviour {
 			
 			float exaggeration = vertex.magnitude < average ? underExaggeration : overExaggeration;
 			float radius = average + exaggeration * (vertex.magnitude - average);
+			vertex = vertex.normalized * radius;
+
+			vertices[vertexIndex] = vertex;
+		}
+
+		mesh.vertices = vertices;
+	}
+
+	public void erode() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+		
+		Vector3[] vertices = mesh.vertices;
+		
+		float underErosion = Random.Range(minimumUnderErosion, maximumUnderErosion);
+		float overErosion = Random.Range(minimumOverErosion, maximumOverErosion);
+
+		float average = planet.water.Level * this.average;
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			Vector3 vertex = vertices[vertexIndex];
+
+			float height = Mathf.Abs(vertex.magnitude - average) / Mathf.Abs((vertex.magnitude < average ? minimum : maximum) - average);
+
+			float erosion = vertex.magnitude < average ? underErosion : overErosion;
+
+			float newHeight = Mathf.Clamp01(Mathf.Exp(-erosion) * height / Mathf.Exp(-erosion * height));
+
+			float radius = average + newHeight * ((vertex.magnitude < average ? minimum : maximum) - average);
+
 			vertex = vertex.normalized * radius;
 
 			vertices[vertexIndex] = vertex;

@@ -118,6 +118,10 @@ public class Planet : MonoBehaviour {
 				surface.exaggerate();
 			}
 
+			if(Input.GetKeyDown(KeyCode.KeypadDivide)) {
+				surface.erode();
+			}
+
 			if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
 				surface.smooth();
 			}
