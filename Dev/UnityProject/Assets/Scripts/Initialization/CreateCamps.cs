@@ -41,6 +41,7 @@ struct Tuple<T, U> : IEquatable<Tuple<T, U>>
 public class CreateCamps : MonoBehaviour
 {
     public Transform planet;
+    public MeshFilter planetMesh;
     public GameObject campPrefab;
     public Transform campParent;
     public GameObject armyPrefab;
@@ -545,6 +546,7 @@ public class CreateCamps : MonoBehaviour
             for (int j = 0; j < numSegs; j++)
             {
                 Vector3 a = Vector3.Slerp(p1, p2, (float)j / numSegs);
+                a = GetSurfacePoint(a);
                 lr.numPositions = ind + j + 1;
                 lr.SetPosition(ind + j, a);
             }
@@ -622,5 +624,78 @@ public class CreateCamps : MonoBehaviour
         Vector3 c4 = GetCircleCenter(p1, p2, p3);
 
         return (c1 + c2 + c3 + c4) / 4f;
+    }
+
+    public Vector3 GetSurfacePoint(Vector3 point)
+    {
+        if (planetMesh != null)
+            return GetSurfacePoint(planetMesh.mesh, point);
+        else
+            return point;
+    }
+
+    public static Vector3 GetSurfacePoint(Mesh planet, Vector3 point)
+    {
+        int[] tris = planet.triangles;
+        Ray r = new Ray(Vector3.zero, point);
+        for (int i = 0; i < tris.Length; i+=3)
+        {
+            Vector3 a = planet.vertices[tris[i]];
+            Vector3 b = planet.vertices[tris[i+1]];
+            Vector3 c = planet.vertices[tris[i+2]];
+            Plane p = new Plane(a, b, c);
+            float enter;
+            if (p.Raycast(r, out enter))
+            {
+                Vector3 intersect = r.GetPoint(enter);
+                //check point in triangle
+                if (PointInTriangle(intersect, a, b, c, p.normal))
+                    return intersect;
+            }
+        }
+        return point;
+    }
+
+    public static bool PointInTriangle(Vector3 p, Vector3 a, Vector3 b, Vector3 c, Vector3 normal)
+    {
+        //Pretend each side of the polygon is a plane, check which side of each plane the point lies (<0 is outside)
+
+        //First side
+        Vector3 v3 = b - a;
+        //work out the normal to our new imaginary plane
+        float v3x2 = normal.y * v3.z - normal.z * v3.y;
+        float v3y2 = normal.z * v3.x - normal.x * v3.z;
+        float v3z2 = normal.x * v3.y - normal.y * v3.x;
+
+        //work out the last value in the plane equation
+        double ld = v3x2 * a.x + v3y2 * a.y + v3z2 * a.z;
+
+        //use the plane equation on our point and check its side
+        ld = v3x2 * p.x + v3y2 * p.y + v3z2 * p.z - ld;
+        if (ld < -0.0001) return false;
+
+        //Second side
+        v3 = c - b;
+        v3x2 = normal.y * v3.z - normal.z * v3.y;
+        v3y2 = normal.z * v3.x - normal.x * v3.z;
+        v3z2 = normal.x * v3.y - normal.y * v3.x;
+
+        ld = v3x2 * b.x + v3y2 * b.y + v3z2 * b.z;
+
+        ld = v3x2 * p.x + v3y2 * p.y + v3z2 * p.z - ld;
+        if (ld < -0.0001) return false;
+
+        //Third side
+        v3 = a - c;
+        v3x2 = normal.y * v3.z - normal.z * v3.y;
+        v3y2 = normal.z * v3.x - normal.x * v3.z;
+        v3z2 = normal.x * v3.y - normal.y * v3.x;
+
+        ld = v3x2 * c.x + v3y2 * c.y + v3z2 * c.z;
+
+        ld = v3x2 * p.x + v3y2 * p.y + v3z2 * p.z - ld;
+        if (ld < -0.0001) return false;
+
+        return true;
     }
 }

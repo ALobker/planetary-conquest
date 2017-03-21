@@ -6,6 +6,7 @@ public class CampScript : MonoBehaviour
     public int faction = 0;
     public int armyFaction = 0;
 
+    public GameObject cylinder;
     public Transform arrow;
     public TextMesh text;
     public GameObject progress;
@@ -36,7 +37,7 @@ public class CampScript : MonoBehaviour
         arrow.gameObject.SetActive(false);
         progress.GetComponent<Renderer>().material.SetFloat("_Cutoff", Mathf.Clamp(campHealth, 0.05f, 1f));
 
-        gameObject.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
+        cylinder.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
     }
 
     // Update is called once per frame
@@ -127,7 +128,7 @@ public class CampScript : MonoBehaviour
         selectedNeighbour = null;
         arrow.gameObject.SetActive(false);
 
-        gameObject.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
+        cylinder.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
 
         deploymentTimer = 0;
     }
