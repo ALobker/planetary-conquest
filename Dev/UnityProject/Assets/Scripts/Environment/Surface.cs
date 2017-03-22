@@ -45,8 +45,8 @@ public class Surface : MonoBehaviour {
 	public float minimumUnderErosion = 0.0f;
 	public float maximumUnderErosion = 0.0f;
 
-	public float minimumOverErosion = 0.0f;
-	public float maximumOverErosion = 0.0f;
+	public float minimumOverErosion = 2.0f;
+	public float maximumOverErosion = 2.0f;
 
 	
 	private int[][] neighbourTriangles;
@@ -111,8 +111,11 @@ public class Surface : MonoBehaviour {
 			smooth();
 		}
 
-		calculateNormals();
 		calculateBounds();
+		erode();
+
+		calculateBounds();
+		calculateNormals();
 	}
 
 	public void updateMaterial() {
@@ -403,18 +406,20 @@ public class Surface : MonoBehaviour {
 		float underErosion = Random.Range(minimumUnderErosion, maximumUnderErosion);
 		float overErosion = Random.Range(minimumOverErosion, maximumOverErosion);
 
-		float average = planet.water.Level * this.average;
-
 		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
 			Vector3 vertex = vertices[vertexIndex];
-
-			float height = Mathf.Abs(vertex.magnitude - average) / Mathf.Abs((vertex.magnitude < average ? minimum : maximum) - average);
-
+			
 			float erosion = vertex.magnitude < average ? underErosion : overErosion;
+			float limit = vertex.magnitude < average ? minimum : maximum;
 
-			float newHeight = Mathf.Clamp01(Mathf.Exp(-erosion) * height / Mathf.Exp(-erosion * height));
+			// This is always non-negative.
+			float height = (vertex.magnitude - average) / (limit - average);
 
-			float radius = average + newHeight * ((vertex.magnitude < average ? minimum : maximum) - average);
+			// Transform the height using a curve that is steeper near the end, depending on the
+			// strength of the erosion.
+			height = Mathf.Exp(-erosion) * height / Mathf.Exp(-erosion * height);
+
+			float radius = average + height * (limit - average);
 
 			vertex = vertex.normalized * radius;
 
@@ -424,6 +429,34 @@ public class Surface : MonoBehaviour {
 		mesh.vertices = vertices;
 	}
 
+
+	public void calculateBounds() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+		
+		Vector3[] vertices = mesh.vertices;
+		
+		minimum = float.MaxValue;
+		maximum = float.MinValue;
+
+		float total = 0.0f;
+
+		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
+			float height = vertices[vertexIndex].magnitude;
+
+			if(height < minimum) {
+				minimum = height;
+			}
+
+			if(height > maximum) {
+				maximum = height;
+			}
+
+			total += height;
+		}
+
+		average = total / vertices.Length;
+	}
 
 	public void calculateNormals() {
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
@@ -460,33 +493,5 @@ public class Surface : MonoBehaviour {
 		}
 
 		mesh.normals = normals;
-	}
-
-	public void calculateBounds() {
-		MeshFilter meshFilter = GetComponent<MeshFilter>();
-		Mesh mesh = meshFilter.mesh;
-		
-		Vector3[] vertices = mesh.vertices;
-		
-		minimum = float.MaxValue;
-		maximum = float.MinValue;
-
-		float total = 0.0f;
-
-		for(int vertexIndex = 0; vertexIndex < vertices.Length; vertexIndex++) {
-			float height = vertices[vertexIndex].magnitude;
-
-			if(height < minimum) {
-				minimum = height;
-			}
-
-			if(height > maximum) {
-				maximum = height;
-			}
-
-			total += height;
-		}
-
-		average = total / vertices.Length;
 	}
 }

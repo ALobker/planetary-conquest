@@ -4,8 +4,8 @@ public class Water : MonoBehaviour {
 	public Planet planet;
 
 	[Header("Water")]
-	public float minimumLevel = 0.99f;
-	public float maximumLevel = 1.01f;
+	public float minimumLevel = 0.995f;
+	public float maximumLevel = 1.005f;
 
 	public float step = 0.001f;
 
