@@ -105,11 +105,11 @@ public class Planet : MonoBehaviour {
 			}
 
 			// Individual surface generation controls.
-			if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
+			if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
 				surface.crater();
 			}
 
-			if(Input.GetKeyDown(KeyCode.KeypadPlus)) {
+			if(Input.GetKeyDown(KeyCode.KeypadMinus)) {
 				surface.fault();
 			}
 
@@ -117,20 +117,20 @@ public class Planet : MonoBehaviour {
 				surface.exaggerate();
 			}
 
-			if(Input.GetKeyDown(KeyCode.KeypadDivide)) {
-				surface.erode();
-			}
-
 			if(Input.GetKeyDown(KeyCode.KeypadEnter)) {
 				surface.smooth();
 			}
 
-			if(Input.GetKeyDown(KeyCode.KeypadPeriod)) {
-				surface.calculateNormals();
+			if(Input.GetKeyDown(KeyCode.KeypadDivide)) {
+				surface.erode();
 			}
 
 			if(Input.GetKeyDown(KeyCode.Keypad0)) {
 				surface.calculateBounds();
+			}
+
+			if(Input.GetKeyDown(KeyCode.KeypadPeriod)) {
+				surface.calculateNormals();
 			}
 
 			// Individual water generation controls.
@@ -156,6 +156,17 @@ public class Planet : MonoBehaviour {
 			if(Input.GetKeyDown(KeyCode.RightBracket)) {
 				if(featuresAtmosphere) {
 					atmosphere.decreaseHeight();
+				}
+			}
+
+			// Update collision controls.
+			if(Input.GetKeyDown(KeyCode.Comma)) {
+				surface.updateCollision();
+			}
+
+			if(Input.GetKeyDown(KeyCode.Period)) {
+				if(featuresWater) {
+					water.updateCollision();
 				}
 			}
 		}

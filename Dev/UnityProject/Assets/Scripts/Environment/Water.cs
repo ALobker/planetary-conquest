@@ -25,12 +25,14 @@ public class Water : MonoBehaviour {
 		Camera.main.depthTextureMode = DepthTextureMode.Depth;
 
 		updateSize();
+		updateCollision();
 	}
 
 	public void generate() {
 		level = Random.Range(minimumLevel, maximumLevel);
 
 		updateSize();
+		updateCollision();
 	}
 
 	public void updateMaterial() {
@@ -70,5 +72,15 @@ public class Water : MonoBehaviour {
 		}
 
 		mesh.vertices = vertices;
+	}
+	
+	public void updateCollision() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+
+		// Even though the provided mesh is the same as the mesh used by the component, setting the
+		// mesh will cause the component to rebuild the collider.
+		MeshCollider meshCollider = GetComponent<MeshCollider>();
+		meshCollider.sharedMesh = mesh;
 	}
 }

@@ -90,6 +90,8 @@ public class Surface : MonoBehaviour {
 		initializeSize();
 
 		calculateBounds();
+
+		updateCollision();
 	}
 
 	public void generate() {
@@ -116,6 +118,8 @@ public class Surface : MonoBehaviour {
 
 		calculateBounds();
 		calculateNormals();
+
+		updateCollision();
 	}
 
 	public void updateMaterial() {
@@ -493,5 +497,16 @@ public class Surface : MonoBehaviour {
 		}
 
 		mesh.normals = normals;
+	}
+
+	
+	public void updateCollision() {
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		Mesh mesh = meshFilter.mesh;
+
+		// Even though the provided mesh is the same as the mesh used by the component, setting the
+		// mesh will cause the component to rebuild the collider.
+		MeshCollider meshCollider = GetComponent<MeshCollider>();
+		meshCollider.sharedMesh = mesh;
 	}
 }
