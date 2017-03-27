@@ -21,6 +21,9 @@ public class Atmosphere : MonoBehaviour {
 
 
 	public void initialize() {
+		// Enable the depth texture so we can do atmospheric haze.
+		Camera.main.depthTextureMode = DepthTextureMode.Depth;
+
 		updateSize();
 	}
 

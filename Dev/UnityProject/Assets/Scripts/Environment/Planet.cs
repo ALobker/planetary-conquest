@@ -19,10 +19,11 @@ public class Planet : MonoBehaviour {
 
 
 	private void Start() {
-		// Per-poly collider
-		// Lightmap UVs
+		// Lightmap UVs for baked lighting...
+		// Fix tiny artifacts related to normals (floating point precision issues? renormalization of tiny values?)
 		// introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle) -> noise() apparently doesn't work on most graphic cards
-		// atmosphere + atmospheric haze + queue fiddling + clouds? (but no noise()... :( )
+		// introduce clouds in atmosphere shader? (but no noise()... :( )
+		// water support in atmosphere shader (either hard implemented or somehow by writing water surface depth but it looks like that's not gonna work)
 		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
 		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting? => hue setting (desaturate first?) or use fancier textures (toggle)) + water depth (bluer/darker when deeper)
 		// random texture selection
