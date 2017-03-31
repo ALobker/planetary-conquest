@@ -123,8 +123,9 @@
 
 				float atmosphere = density * Density;
 
+				// TODO Eliminate banding bla
 				float3 color = AirColor.rgb;
-				float transparency = saturate(atmosphere);
+				float transparency = dither(saturate(atmosphere), screenPosition);
 
 				output.Albedo = color;
 				output.Alpha = clamp(transparency, MinimumTransparency, MaximumTransparency);
@@ -132,7 +133,7 @@
 
 
 			half4 LightingCustom(SurfaceOutput s, half3 viewDir, float atten) {
-				half4 color;
+				float4 color;
 
 				color.rgb = s.Albedo;
 				color.a = s.Alpha;

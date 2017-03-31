@@ -278,3 +278,23 @@ void blendLayers(inout float3 color, inout float3 normal, inout float3 surface, 
 	normal = normalize(normal * weights.x + blendNormal * weights.y);
 	surface = (surface * weights.x + blendSurface * weights.y) / (weights.x + weights.y);
 }
+
+
+/**
+ * Dithers the value using the interleaved gradient noise for the screen position.
+ * 
+ * Based on http://advances.realtimerendering.com/s2014/index.html and https://www.shadertoy.com/view/MslGR8.
+ */
+float dither(float value, float4 screenPosition) {
+	// Calculate the actual screen position in pixels.
+	float2 pixelPosition = screenPosition.xy / screenPosition.w * _ScreenParams.xy;
+
+	// Calculate the interleaved gradient noise for the screen position.
+	float noise = frac(52.9829189 * frac(dot(pixelPosition, float2(0.06711056, 0.00583715))));
+
+	// Normalize the noise.
+	float dither = (noise - 0.5) / 255.0;
+
+	// Apply the dither.
+	return value + dither;
+}
