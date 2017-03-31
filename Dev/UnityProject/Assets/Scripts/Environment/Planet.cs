@@ -1,10 +1,27 @@
-﻿using UnityEngine;
+﻿// Lightmap UVs for baked lighting...
+// Fix tiny artifacts related to normals (floating point precision issues? renormalization of tiny values?)
+
+// introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle) -> noise() apparently doesn't work on most graphic cards
+// introduce clouds in atmosphere shader? (but no noise()... :( )
+
+// water support in atmosphere shader (either hard implemented or somehow by writing water surface depth but it looks like that's not gonna work)
+
+// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
+// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting? => hue setting (desaturate first?) or use fancier textures (toggle)) + water depth (bluer/darker when deeper)
+// random texture selection
+
+// moon and asteroid prefabs
+
+using UnityEngine;
 
 public class Planet : MonoBehaviour {
 	public Surface surface;
 	public Water water;
 	public Atmosphere atmosphere;
 
+	[Header("Planet")]
+	public bool generateOnStart = true;
+	
 	[Header("Features")]
 	public bool featuresWater = false;
 	public bool featuresAtmosphere = false;
@@ -19,51 +36,8 @@ public class Planet : MonoBehaviour {
 
 
 	private void Start() {
-		// Lightmap UVs for baked lighting...
-		// Fix tiny artifacts related to normals (floating point precision issues? renormalization of tiny values?)
-		// introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle) -> noise() apparently doesn't work on most graphic cards
-		// introduce clouds in atmosphere shader? (but no noise()... :( )
-		// water support in atmosphere shader (either hard implemented or somehow by writing water surface depth but it looks like that's not gonna work)
-		// script parameterization of materials (minimum, maximum, etc.) + remove all properties?
-		// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting? => hue setting (desaturate first?) or use fancier textures (toggle)) + water depth (bluer/darker when deeper)
-		// random texture selection
-		// moon and asteroid prefabs
-		
-		// Perform initialization.
-		surface.initialize();
-
-		if(featuresWater) {
-			water.initialize();
-		}
-
-		if(featuresAtmosphere) {
-			atmosphere.initialize();
-		}
-
-		// Perform generation if requested.
-		if(generateSurface) {
-			surface.generate();
-		}
-
-		if(featuresWater && generateWater) {
-			water.generate();
-		}
-
-		if(featuresAtmosphere && generateAtmosphere) {
-			atmosphere.generate();
-		}
-
-		// Update the materials if generation took place.
-		if(generateSurface) {
-			surface.updateMaterial();
-		}
-
-		if(featuresWater && generateWater) {
-			water.updateMaterial();
-		}
-
-		if(featuresAtmosphere && generateAtmosphere) {
-			atmosphere.updateMaterial();
+		if(generateOnStart) {
+			generate();
 		}
 	}
 
@@ -170,6 +144,46 @@ public class Planet : MonoBehaviour {
 					water.updateCollision();
 				}
 			}
+		}
+	}
+
+
+	public void generate() {
+		// Perform initialization.
+		surface.initialize();
+
+		if(featuresWater) {
+			water.initialize();
+		}
+
+		if(featuresAtmosphere) {
+			atmosphere.initialize();
+		}
+
+		// Perform generation if requested.
+		if(generateSurface) {
+			surface.generate();
+		}
+
+		if(featuresWater && generateWater) {
+			water.generate();
+		}
+
+		if(featuresAtmosphere && generateAtmosphere) {
+			atmosphere.generate();
+		}
+
+		// Update the materials if appropriate.
+		if(generateSurface) {
+			surface.updateMaterial();
+		}
+
+		if(featuresWater) {
+			water.updateMaterial();
+		}
+
+		if(featuresAtmosphere) {
+			atmosphere.updateMaterial();
 		}
 	}
 }
