@@ -11,7 +11,10 @@
 		LOD 200
 		
 		CGPROGRAM
-			#pragma surface surf Custom alpha vertex:vert
+			// TODO bla	for now we disable everything we don't need bla we can look at expanding this later (only forwardbase, forwardadd, and ambient are enabled right now)
+			#pragma surface surf Atmosphere vertex:vert alpha exclude_path:deferred exclude_path:prepass noshadow novertexlights nolightmap nodynlightmap nodirlightmap nofog nometa
+			
+			// TODO bla about DX9
 			#pragma target 3.0
 			
 			
@@ -132,7 +135,7 @@
 			}
 
 
-			half4 LightingCustom(SurfaceOutput s, half3 viewDir, float atten) {
+			half4 LightingAtmosphere(SurfaceOutput s, half3 viewDir, float atten) {
 				float4 color;
 
 				color.rgb = s.Albedo;

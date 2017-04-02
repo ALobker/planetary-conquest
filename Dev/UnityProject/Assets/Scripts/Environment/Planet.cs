@@ -122,13 +122,13 @@ public class Planet : MonoBehaviour {
 			}
 
 			// Individual atmosphere generation controls.
-			if(Input.GetKeyDown(KeyCode.LeftBracket)) {
+			if(Input.GetKeyDown(KeyCode.RightBracket)) {
 				if(featuresAtmosphere) {
 					atmosphere.increaseHeight();
 				}
 			}
 
-			if(Input.GetKeyDown(KeyCode.RightBracket)) {
+			if(Input.GetKeyDown(KeyCode.LeftBracket)) {
 				if(featuresAtmosphere) {
 					atmosphere.decreaseHeight();
 				}
