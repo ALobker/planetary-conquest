@@ -4,8 +4,8 @@ public class Atmosphere : MonoBehaviour {
 	public Planet planet;
 
 	[Header("Atmosphere")]
-	public float minimumHeight = 1.08f;
-	public float maximumHeight = 1.125f;
+	public float minimumHeight = 1.35f;
+	public float maximumHeight = 1.35f;
 
 	public float step = 0.01f;
 
