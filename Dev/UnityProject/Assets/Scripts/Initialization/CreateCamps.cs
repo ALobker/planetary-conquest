@@ -547,12 +547,12 @@ public class CreateCamps : MonoBehaviour
             {
                 Vector3 a = Vector3.Slerp(p1, p2, (float)j / numSegs);
                 a = GetSurfacePoint(a);
-                lr.numPositions = ind + j + 1;
+                lr.positionCount = ind + j + 1;
                 lr.SetPosition(ind + j, a);
             }
             ind += numSegs;
         }
-        lr.numPositions = ind + 1;
+        lr.positionCount = ind + 1;
         lr.SetPosition(ind, points[0]);
     }
 
