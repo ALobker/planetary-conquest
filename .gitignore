@@ -34,3 +34,6 @@ sysinfo.txt
 
 # Substance Designer generated files
 .autosave/
+
+# Consulo files
+.consulo/
