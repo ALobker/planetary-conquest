@@ -51,11 +51,13 @@ public class CreateCamps : MonoBehaviour
     public int numCamps = 10;
 
     //private List<Vector3> drawFrom, drawTo;
+    private Surface planetSurface;
 
     // Use this for initialization
     void Start()
     {
         //CreateAllCamps();
+        planetSurface = planetMesh.GetComponent<Surface>();
     }
 
     // Update is called once per frame
@@ -147,13 +149,22 @@ public class CreateCamps : MonoBehaviour
             neighbours = FindNeighboursBetter(points);
             //Debug.Log("Numpoints " + points.Count + ", neighs: " + neighbours.Count);
         }
+        
+        float radius = 1.5f * Mathf.Sqrt(numCamps);
+        if (planetSurface != null)
+        {
+            planetSurface.minimumRadius = radius;
+            planetSurface.maximumRadius = radius;
+            planetSurface.generate();
+        }
 
         List<CampScript> camps = new List<CampScript>(points.Count);
 
         Vector3 one = Vector3.one + 0.001f * Vector3.up; //slightly offsetted vector one
         for (int i = 0; i < points.Count; i++)
         {
-            Vector3 p = points[i].normalized * 5.5f;
+            //Vector3 p = points[i].normalized * 5.5f;
+            Vector3 p = GetSurfacePoint(points[i]);
             GameObject newCamp = GameObject.Instantiate<GameObject>(campPrefab);
             newCamp.transform.parent = campParent;
             newCamp.transform.position = p;
@@ -553,7 +564,7 @@ public class CreateCamps : MonoBehaviour
             ind += numSegs;
         }
         lr.numPositions = ind + 1;
-        lr.SetPosition(ind, points[0]);
+        lr.SetPosition(ind, GetSurfacePoint(points[0]));
     }
 
     //Overlay function because i want to use points instead of directions
@@ -636,6 +647,14 @@ public class CreateCamps : MonoBehaviour
 
     public static Vector3 GetSurfacePoint(Mesh planet, Vector3 point)
     {
+        RaycastHit hit;
+        Ray ray = new Ray(point.normalized * 15f, -point);
+        Debug.DrawRay(ray.origin, ray.direction);
+        if (Physics.Raycast(ray, out hit, 15f))
+        {
+            return hit.point + (hit.point.normalized * 0.05f); //slightly above surface
+        }
+        /*
         int[] tris = planet.triangles;
         Ray r = new Ray(Vector3.zero, point);
         for (int i = 0; i < tris.Length; i+=3)
@@ -652,7 +671,7 @@ public class CreateCamps : MonoBehaviour
                 if (PointInTriangle(intersect, a, b, c, p.normal))
                     return intersect;
             }
-        }
+        }*/
         return point;
     }
 
