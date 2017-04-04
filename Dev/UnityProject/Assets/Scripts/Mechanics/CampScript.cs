@@ -37,7 +37,7 @@ public class CampScript : MonoBehaviour
         arrow.gameObject.SetActive(false);
         progress.GetComponent<Renderer>().material.SetFloat("_Cutoff", Mathf.Clamp(campHealth, 0.05f, 1f));
 
-        cylinder.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
+        cylinder.GetComponent<Renderer>().material.color = GameManager.colors[GameManager.playerColors[faction]];
     }
 
     // Update is called once per frame
@@ -100,7 +100,7 @@ public class CampScript : MonoBehaviour
             deploymentTimer %= 1f;
         }
 
-        text.GetComponent<Renderer>().material.color = GameManager.playerColors[armyFaction];
+        text.GetComponent<Renderer>().material.color = GameManager.colors[GameManager.playerColors[armyFaction]];
         text.text = "" + Mathf.FloorToInt(numUnits);
     }
 
@@ -128,7 +128,7 @@ public class CampScript : MonoBehaviour
         selectedNeighbour = null;
         arrow.gameObject.SetActive(false);
 
-        cylinder.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
+        cylinder.GetComponent<Renderer>().material.color = GameManager.colors[GameManager.playerColors[faction]];
 
         deploymentTimer = 0;
     }

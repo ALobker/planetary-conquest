@@ -13,7 +13,7 @@ public class ArmyScript : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        gameObject.GetComponent<Renderer>().material.color = GameManager.playerColors[faction];
+        gameObject.GetComponent<Renderer>().material.color = GameManager.colors[GameManager.playerColors[faction]];
     }
 
     // Update is called once per frame

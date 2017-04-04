@@ -68,6 +68,8 @@ public class DraggingInteraction : MonoBehaviour
             //no dragging if no camp selected
             if (dragStart == Vector3.zero)
                 return;
+            if (selectedCamp == null)
+                return;
 
             //do raycast
             RaycastHit hit;
@@ -96,6 +98,8 @@ public class DraggingInteraction : MonoBehaviour
         {
             //no dragging if no camp selected
             if (dragStart == Vector3.zero)
+                return;
+            if (selectedCamp == null)
                 return;
 
             //do raycast

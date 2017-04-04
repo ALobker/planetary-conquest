@@ -148,6 +148,7 @@ public class OrbitCamera : MonoBehaviour
 
         if (_y < -180) _y += 360;
         if (_y > 180) _y -= 360;
+        _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
 
         Rotate(_x, _y);
     }

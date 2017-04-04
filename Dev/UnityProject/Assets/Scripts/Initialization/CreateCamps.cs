@@ -49,14 +49,15 @@ public class CreateCamps : MonoBehaviour
     public Material lineMat;
     public Transform lineParent;
     public int numCamps = 10;
+    public float radius = 5;
 
-    //private List<Vector3> drawFrom, drawTo;
+    private Planet planetObj;
     private Surface planetSurface;
 
     // Use this for initialization
     void Start()
     {
-        //CreateAllCamps();
+        planetObj = planet.GetComponent<Planet>();
         planetSurface = planetMesh.GetComponent<Surface>();
     }
 
@@ -65,13 +66,6 @@ public class CreateCamps : MonoBehaviour
     {
         if (GameManager.gameState != GameManager.State.Playing)
             return;
-        /*if (drawFrom == null)
-            return;
-
-        for (int i = 0; i < drawFrom.Count; i++)
-        {
-            Debug.DrawLine(planet.rotation * drawFrom[i], planet.rotation * drawTo[i], Color.white);
-        }*/
     }
 
     public void CreateAllCamps(bool tutorial = false)
@@ -150,12 +144,12 @@ public class CreateCamps : MonoBehaviour
             //Debug.Log("Numpoints " + points.Count + ", neighs: " + neighbours.Count);
         }
         
-        float radius = 1.5f * Mathf.Sqrt(numCamps);
+        radius = 1.5f * Mathf.Sqrt(numCamps);
         if (planetSurface != null)
         {
             planetSurface.minimumRadius = radius;
             planetSurface.maximumRadius = radius;
-            planetSurface.generate();
+            planetObj.generate();
         }
 
         List<CampScript> camps = new List<CampScript>(points.Count);
@@ -163,7 +157,6 @@ public class CreateCamps : MonoBehaviour
         Vector3 one = Vector3.one + 0.001f * Vector3.up; //slightly offsetted vector one
         for (int i = 0; i < points.Count; i++)
         {
-            //Vector3 p = points[i].normalized * 5.5f;
             Vector3 p = GetSurfacePoint(points[i]);
             GameObject newCamp = GameObject.Instantiate<GameObject>(campPrefab);
             newCamp.transform.parent = campParent;
@@ -211,17 +204,16 @@ public class CreateCamps : MonoBehaviour
             camps[11].faction = 3;
         }
 
-        //drawFrom = new List<Vector3>();
-        //drawTo = new List<Vector3>();
         //DrawConnections(camps);
         //DrawBorders(camps);
         DrawBordersAlternative(camps);
 
         //set camera for player
-        Vector3 cameraPos = camps[playerIndex].transform.position.normalized * 20f;
+        Vector3 cameraPos = camps[playerIndex].transform.position.normalized * radius * 3;
         Camera.main.transform.position = cameraPos;
         Camera.main.transform.LookAt(Vector3.zero, Vector3.up);
         OrbitCamera orb = Camera.main.GetComponent<OrbitCamera>();
+        orb._distance = radius * 3;
         orb.SetRotation(Camera.main.transform.eulerAngles.y, Camera.main.transform.eulerAngles.x);
     }
 
@@ -456,7 +448,7 @@ public class CreateCamps : MonoBehaviour
                         //Debug.Log("intersect");
                         //tri-point found
                         Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position);
-                        mid = mid.normalized * 5.05f;
+                        mid = mid.normalized * radius;
                         if (!intersections.Contains(mid))
                             intersections.Add(mid);
                     }
@@ -472,8 +464,10 @@ public class CreateCamps : MonoBehaviour
                             {
                                 //quad-point found
                                 Vector3 mid = GetCircleCenter(camp.transform.position, neigh.transform.position, second.transform.position, third.transform.position);
-                                mid = mid.normalized * 5.05f;
-                                if (!intersections.Contains(mid) && mid.magnitude > 1)
+                                if (mid.magnitude < 1)
+                                    continue;
+                                mid = mid.normalized * radius;
+                                if (!intersections.Contains(mid))
                                     intersections.Add(mid);
                             }
                         }

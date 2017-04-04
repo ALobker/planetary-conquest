@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
 
     public static int numPlayers = 3;
     //public static Color[] playerColors = { Color.white, Color.cyan, Color.magenta, Color.yellow, Color.blue, Color.red, Color.green, Color.gray };
-    public static Color[] playerColors = {  new Color(1,1,1), //white
+    public static Color[] colors = {  new Color(1,1,1), //white
                                             new Color(.86f, .43f, 0), //orange
                                             new Color(0, .43f, .86f), //blue
                                             new Color(.71f, .43f, 1), //light purple
@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
                                             new Color(.29f, 0, .57f), //dark purple
                                             new Color(0, .57f, .57f), //aqua
                                             new Color(0,0,0) };
-
+    public static int[] playerColors = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }; // new int[11];
     public Transform planet;
 
     // Use this for initialization

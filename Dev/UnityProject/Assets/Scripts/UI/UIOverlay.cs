@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,6 +11,10 @@ public class UIOverlay : MonoBehaviour
     private CreateCamps cc;
     private int selectedPlayers = 3, selectedSize = 0;
     private int winningPlayer = 0;
+
+    private int showDropdownFaction = -1;
+    private int showDropdownColor = -1;
+    Texture2D[] texBlocks;
 
     /************
      * Menu
@@ -34,6 +39,22 @@ public class UIOverlay : MonoBehaviour
         if (campParent == null)
             campParent = GameObject.Find("Camps").transform;
         cc = GetComponent<CreateCamps>();
+
+        //Texture2DArray arr = new Texture2DArray()
+        int colorboxsize = Mathf.RoundToInt(Mathf.Min(500f * uiScale, Screen.height) / 10f);
+        texBlocks = new Texture2D[10];
+        for (int i = 0; i < 10; i++)
+        {
+            texBlocks[i] = new Texture2D(colorboxsize, colorboxsize, TextureFormat.RGBA32, false);
+            for (int j = 0; j < colorboxsize; j++)
+            {
+                for (int k = 0; k < colorboxsize; k++)
+                {
+                    texBlocks[i].SetPixel(j, k, GameManager.colors[GameManager.playerColors[i + 1]]);
+                }
+            }
+            texBlocks[i].Apply();
+        }
     }
 
     // Update is called once per frame
@@ -128,11 +149,13 @@ public class UIOverlay : MonoBehaviour
             cc.numCamps = 80;
         }
 
-        float boxWidth = Mathf.Min(800f * uiScale, Screen.width), boxHeight = Mathf.Min(500f * uiScale,Screen.height);
+
+        float boxWidth = Mathf.Min(800f * uiScale, Screen.width), boxHeight = Mathf.Min(500f * uiScale, Screen.height);
         float boxOffsetX = (Screen.width - boxWidth) / 2f, boxOffsetY = (Screen.height - boxHeight) / 2f;
-        float divide = (boxWidth * 3f / 4f), colblocks = 7;
-        float col1 = boxOffsetX, col2 = boxOffsetX + 2 * divide / colblocks, col3 = boxOffsetX + 3 * divide / colblocks, col4 = boxOffsetX + 5 * divide / colblocks, col5 = boxOffsetX + 6 * divide / colblocks;
+        float divide = (boxWidth * 3f / 4f), colblocks = 7f;
+        float col1 = boxOffsetX, col2 = boxOffsetX + 2f * divide / colblocks, col3 = boxOffsetX + 3f * divide / colblocks, col4 = boxOffsetX + 5f * divide / colblocks, col5 = boxOffsetX + 6f * divide / colblocks;
         float lineHeight = boxHeight / 12f;
+
         GUI.Label(new Rect(col1, boxOffsetY, col2 - col1, lineHeight), "Players");
         GUI.Label(new Rect(col2, boxOffsetY, col3 - col2, lineHeight), "Ping");
         GUI.Label(new Rect(col3, boxOffsetY, col4 - col3, lineHeight), "Faction/Civ/Race");
@@ -142,8 +165,34 @@ public class UIOverlay : MonoBehaviour
         {
             GUI.Label(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), "Player " + (i + 1));
             GUI.Label(new Rect(col2, boxOffsetY + lineHeight * (i + 1), col3 - col2, lineHeight), "0");
-            GUI.Label(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), "Default");
-            GUI.Label(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), "Red");
+            if (GUI.Button(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), "Default"))
+            //if (EditorGUI.DropdownButton(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), new GUIContent("Default"), FocusType.Keyboard))
+            {
+                if(showDropdownFaction > -1)
+                    showDropdownFaction = -1;
+                else
+                    showDropdownFaction = i;
+                showDropdownColor = -1;
+            }
+            /*if(GameManager.playerColors[i] == 0) {
+                if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), "Rand"))
+                {
+                    if (showDropdownColor > -1)
+                        showDropdownColor = -1;
+                    else
+                        showDropdownColor = i;
+                    showDropdownFaction = -1;
+                }
+            } else {*/
+                if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), texBlocks[i]))
+                {
+                    if (showDropdownColor > -1)
+                        showDropdownColor = -1;
+                    else
+                        showDropdownColor = i;
+                    showDropdownFaction = -1;
+                }
+            //}
             GUI.Label(new Rect(col5, boxOffsetY + lineHeight * (i + 1), boxOffsetX + divide - col5, lineHeight), "-");
         }
         //chat
@@ -183,6 +232,19 @@ public class UIOverlay : MonoBehaviour
         //TODO: dropdowns maken
         //TODO: kleuren exclusive maken
         //TODO: player disablen als niet gekozen wordt
+
+        //show dropdowns
+        if (showDropdownFaction > -1)
+        {
+            GUI.Box(new Rect(col3, boxOffsetY + lineHeight * (showDropdownFaction + 2), col4 - col3, lineHeight * 3.5f), "Dropdown");
+            GUI.Button(new Rect(col3 + 5, boxOffsetY + lineHeight * (showDropdownFaction + 2) + 5, col4 - col3 - 10, lineHeight), "A");
+            GUI.Button(new Rect(col3 + 5, boxOffsetY + lineHeight * (showDropdownFaction + 3) + 10, col4 - col3 - 10, lineHeight), "B");
+            GUI.Button(new Rect(col3 + 5, boxOffsetY + lineHeight * (showDropdownFaction + 4) + 15, col4 - col3 - 10, lineHeight), "C");
+        }
+        if (showDropdownColor > -1)
+        {
+            GUI.Box(new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4, lineHeight * 3.5f), "Dropdown");
+        }
 
         //ready
 
@@ -248,12 +310,14 @@ public class UIOverlay : MonoBehaviour
             numCamps++;
         }
 
-        int aliveFactions = 0;
-        GUI.Label(new Rect(10, 40, 300, 40), "Empty\t" + factionNumbers[0]);
         GUIStyle defaultStyle = GUI.skin.label;
+        int aliveFactions = 0;
+        defaultStyle.normal.textColor = GameManager.colors[0];
+        GUI.Label(new Rect(10, 40, 300, 40), "Empty\t" + factionNumbers[0]);
+
         for (int i = 1; i < factionNumbers.Length; i++)
         {
-            defaultStyle.normal.textColor = GameManager.playerColors[i];
+            defaultStyle.normal.textColor = GameManager.colors[GameManager.playerColors[i]];
             GUI.Label(new Rect(10, 40 + i * 40, 300, 40), "Player " + i + "\t" + factionNumbers[i], defaultStyle);
             if (factionNumbers[i] > 0)
             {
@@ -272,10 +336,11 @@ public class UIOverlay : MonoBehaviour
         for (int i = 0; i < factionNumbers.Length; i++)
         {
             Texture2D tex = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-            tex.SetPixel(0, 0, GameManager.playerColors[i]);
+            tex.SetPixel(0, 0, GameManager.colors[GameManager.playerColors[i]]);
             tex.Apply();
             float width = ((float)Screen.width * factionNumbers[i]) / numCamps;
-            GUI.DrawTexture(new Rect(runningOffset, 0, width, 30), tex);
+            //GUI.DrawTexture(new Rect(runningOffset, 0, width, 30), tex);
+            EditorGUI.DrawPreviewTexture(new Rect(runningOffset, 0, width, 30), tex);
             runningOffset += width;
         }
     }
