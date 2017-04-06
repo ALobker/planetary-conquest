@@ -38,6 +38,13 @@ public class Atmosphere : MonoBehaviour {
 		Material material = meshRenderer.material;
 
 		material.SetFloat("SurfaceHeight", planet.surface.Average);
+
+		if(planet.featuresWater) {
+			material.SetFloat("WaterHeight", planet.surface.Average * planet.water.Level);
+		}
+		else {
+			material.SetFloat("WaterHeight", 0.0f);
+		}
 	}
 
 

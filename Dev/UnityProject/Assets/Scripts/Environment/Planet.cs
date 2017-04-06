@@ -7,7 +7,7 @@
 // water support in atmosphere shader (either hard implemented or somehow by writing water surface depth but it looks like that's not gonna work)
 
 // script parameterization of materials (minimum, maximum, etc.) + remove all properties?
-// color selection from gradient + luminance texture (RGB to HSL to RGB? or something simpler like tinting? => hue setting (desaturate first?) or use fancier textures (toggle)) + water depth (bluer/darker when deeper)
+// color selection from gradient + saturation and value channels in surface texture, remove metallic channel + add extra layers + water depth (bluer/darker when deeper)
 // random texture selection
 
 // moon and asteroid prefabs

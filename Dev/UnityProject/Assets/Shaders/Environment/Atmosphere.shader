@@ -34,6 +34,7 @@
 			float MaximumTransparency;
 
 			float SurfaceHeight;
+			float WaterHeight;
 
 			struct Input {
 				float3 position;
@@ -50,15 +51,26 @@
 				input.viewDirection = normalize(ObjSpaceViewDir(data.vertex));
 			}
 
-			float calculateDensity(float angle, float midPointHeight) {
+			float calculateDensity(float angle, float midPointHeight, float3 midPointPosition, float3 viewDirection) {
 				// Height from polar coordinates: (R + h) / cos(theta) - R
 				float height = (SurfaceHeight + midPointHeight) / cos(angle) - SurfaceHeight;
 
+				float3 position = midPointPosition + SurfaceHeight + viewDirection * (height + SurfaceHeight) * sin(angle);
+
+				// TODO Cache?
+				float4 lightPositionOrDirection = mul(unity_WorldToObject, _WorldSpaceLightPos0);
+				float3 lightDirection = lerp(-lightPositionOrDirection.xyz, normalize(lightPositionOrDirection.xyz - position), lightPositionOrDirection.w);
+
+				float3 lowestPoint = position + lightDirection * dot(-position, lightDirection);
+
+				float differenceSign = sign(length(lowestPoint) - max(SurfaceHeight, WaterHeight));
+				float differencePack = 0.5 + 0.5 * stretch(differenceSign);
+
 				// Atmospheric density from height: e ^ (-h / H)
-				return exp(-height / ScaleHeight);
+				return differencePack * exp(-height / ScaleHeight);
 			}
 
-			float integrate(float startAngle, float endAngle, float midPointHeight) {
+			float integrate(float startAngle, float endAngle, float midPointHeight, float3 midPointPosition, float3 viewDirection) {
 				float density = 0.0;
 
 				float angle = endAngle - startAngle;
@@ -67,8 +79,8 @@
 					float startAngleStep = startAngle + angle * n / NumberOfIntegrationIntervals;
 					float endAngleStep = startAngle + angle * (n + 1) / NumberOfIntegrationIntervals;
 
-					float startDensity = calculateDensity(startAngleStep, midPointHeight);
-					float endDensity = calculateDensity(endAngleStep, midPointHeight);
+					float startDensity = calculateDensity(startAngleStep, midPointHeight, midPointPosition, viewDirection);
+					float endDensity = calculateDensity(endAngleStep, midPointHeight, midPointPosition, viewDirection);
 
 					// Trapezoidal rule. The angle comes from a polar coordinate system, so it's just like a regular integration.
 					float totalDensity = (endAngleStep - startAngleStep) * (endDensity + startDensity) / 2;
@@ -86,43 +98,34 @@
 				// TODO opposite angle bla
 				float distance = dot(viewDirection, position);
 
-				// Invert sphere normals, integrate either intersecting line or depth depending on which one is less.
-				// I think this should be able to use the same code path and calculations, it's just the distance that is different.
-				// The polar coordinate system will have to run from the opposite direction, I reckon, and no half distance x 2 anymore.
-				// This will make the atmosphere disappear on the other side of transparent water, but I reckon it won't be noticable.
-				// Light integration should be the same in both cases too.
-				// Look up Rayleigh scattering.
-				// Maybe clouds? Could try involving white colored noise in the integration.
-
 				float4 screenPosition = UNITY_PROJ_COORD(input.screenPos);
 				float depth = LinearEyeDepth(tex2Dproj(_CameraDepthTexture, screenPosition).r);
 				float fragmentDepth = LinearEyeDepth(screenPosition.z / screenPosition.w);
 				float atmosphereDepth = abs(fragmentDepth - depth);
 
-				// Let's see, we need to integrate over the distance here, but blabla angle blabla height?
 				float3 lowestPoint = position - viewDirection * distance;
 				float lowestHeight = length(lowestPoint);
-
-				// Something about the lowest height. How's that work?
-				// atmodist is essentially a capped version that is below surfaceheight. need to know min/max angle (or max/min actually)?
-				// Gotta draw this out when I'm not tired I guess.
 
 				// TODO Can be negative now bla
 				float midPointHeight = lowestHeight - SurfaceHeight;
 
+				// TODO Depth is in world space but whatever for now.
 				float3 surfacePoint = position - viewDirection * atmosphereDepth;
 
 				float theta = acos(lowestHeight / length(position));
 				float beta = acos(lowestHeight / length(surfacePoint));
+				float gamma = acos(lowestHeight / WaterHeight);
 
-				// Distance is in object space but whatever for now. atmosphereDepth is in camera space? are distances the same?
-				float angle = pick(theta, -beta, atmosphereDepth, distance * 2.0);
+				float signum = -sign(dot(viewDirection, surfacePoint));
+
+				// TODO bla smallest angle, sign for beta angle bla
+				float angle = min(min(theta, signum * beta), -gamma);
 
 				float startAngle = -theta;
 				float endAngle = angle;
 
 				// TODO blaaa
-				float density = integrate(startAngle, endAngle, midPointHeight);
+				float density = integrate(startAngle, endAngle, midPointHeight, lowestPoint, viewDirection);
 
 				float atmosphere = density * Density;
 
@@ -135,13 +138,8 @@
 			}
 
 
-			half4 LightingAtmosphere(SurfaceOutput s, half3 viewDir, float atten) {
-				float4 color;
-
-				color.rgb = s.Albedo;
-				color.a = s.Alpha;
-
-				return color;
+			float4 LightingAtmosphere(SurfaceOutput s, half3 viewDir, float atten) {
+				return float4(atten * s.Albedo, s.Alpha);
 			}
 		ENDCG
 	}
