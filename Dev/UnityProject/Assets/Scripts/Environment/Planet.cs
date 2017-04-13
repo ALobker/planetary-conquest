@@ -4,7 +4,9 @@
 // introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle) -> noise() apparently doesn't work on most graphic cards
 // introduce clouds in atmosphere shader? (but no noise()... :( )
 
-// water support in atmosphere shader (either hard implemented or somehow by writing water surface depth but it looks like that's not gonna work)
+// use scaling parameters in water shader, use substances/water shading, use density integration?
+
+// clean up water/atmosphere shader like surface shader
 
 // script parameterization of materials (minimum, maximum, etc.) + remove all properties?
 // color selection from gradient + saturation and value channels in surface texture, remove metallic channel + add extra layers + water depth (bluer/darker when deeper)

@@ -61,7 +61,7 @@
 				float4 lightPositionOrDirection = mul(unity_WorldToObject, _WorldSpaceLightPos0);
 				float3 lightDirection = lerp(-lightPositionOrDirection.xyz, normalize(lightPositionOrDirection.xyz - position), lightPositionOrDirection.w);
 
-				float3 lowestPoint = position + lightDirection * dot(-position, lightDirection);
+				float3 lowestPoint = position - lightDirection * dot(position, lightDirection);
 
 				float differenceSign = sign(length(lowestPoint) - max(SurfaceHeight, WaterHeight));
 				float differencePack = 0.5 + 0.5 * stretch(differenceSign);
