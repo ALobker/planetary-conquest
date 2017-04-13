@@ -55,7 +55,7 @@
 				// Height from polar coordinates: (R + h) / cos(theta) - R
 				float height = (SurfaceHeight + midPointHeight) / cos(angle) - SurfaceHeight;
 
-				float3 position = midPointPosition + viewDirection * (height + SurfaceHeight) * sin(angle);
+				float3 position = midPointPosition - viewDirection * (height + SurfaceHeight) * sin(angle);
 
 				// TODO Cache?
 				float4 lightPositionOrDirection = mul(unity_WorldToObject, _WorldSpaceLightPos0);
@@ -65,6 +65,12 @@
 
 				float differenceSign = sign(length(lowestPoint) - max(SurfaceHeight, WaterHeight));
 				float differencePack = 0.5 + 0.5 * stretch(differenceSign);
+
+				float signum = sign(dot(position, lightDirection));
+
+				if(signum < 0) {
+					differencePack = 1;
+				}
 
 				// Atmospheric density from height: e ^ (-h / H)
 				return differencePack * exp(-height / ScaleHeight);
