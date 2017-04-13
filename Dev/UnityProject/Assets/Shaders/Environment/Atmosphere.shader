@@ -55,7 +55,7 @@
 				// Height from polar coordinates: (R + h) / cos(theta) - R
 				float height = (SurfaceHeight + midPointHeight) / cos(angle) - SurfaceHeight;
 
-				float3 position = midPointPosition + SurfaceHeight + viewDirection * (height + SurfaceHeight) * sin(angle);
+				float3 position = midPointPosition + viewDirection * (height + SurfaceHeight) * sin(angle);
 
 				// TODO Cache?
 				float4 lightPositionOrDirection = mul(unity_WorldToObject, _WorldSpaceLightPos0);
