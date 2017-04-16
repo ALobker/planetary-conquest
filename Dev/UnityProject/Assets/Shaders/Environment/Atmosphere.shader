@@ -63,17 +63,20 @@
 
 				float3 lowestPoint = position - lightDirection * dot(position, lightDirection);
 
-				float differenceSign = sign(length(lowestPoint) - max(SurfaceHeight, WaterHeight));
-				float differencePack = 0.5 + 0.5 * stretch(differenceSign);
+				//float differenceSign = sign(length(lowestPoint) - max(SurfaceHeight, WaterHeight));
+				//float differencePack = 0.5 + 0.5 * stretch(differenceSign);
 
-				float signum = sign(dot(position, lightDirection));
+				float angleFalloff = 0.5;
+				float a = saturate((angleFalloff - saturate(dot(normalize(position), lightDirection))) / angleFalloff);
 
-				if(signum < 0) {
-					differencePack = 1;
-				}
+				float heightFalloff = 50.0;
+				float b = saturate((length(lowestPoint) - max(SurfaceHeight, WaterHeight)) / heightFalloff);
 
+				// TODO lerp between light side and dark side bla
+				float luminosity = lerp(b, 1.0, a);
+				
 				// Atmospheric density from height: e ^ (-h / H)
-				return differencePack * exp(-height / ScaleHeight);
+				return luminosity * exp(-height / ScaleHeight);
 			}
 
 			float integrate(float startAngle, float endAngle, float midPointHeight, float3 midPointPosition, float3 viewDirection) {
