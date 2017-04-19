@@ -9,6 +9,7 @@
 // clean up water/atmosphere shader like surface shader
 
 // use minimum surface height instead of average in atmospheric shadowing? Could make it tweakable, with an offset between min and max
+// use distance based sampling for the numerical integration since the atmosphere is round -> redistributes samples to the sparser area, increasing accuracy
 
 // script parameterization of materials (minimum, maximum, etc.) + remove all properties?
 // color selection from gradient + saturation and value channels in surface texture, remove metallic channel + add extra layers + water depth (bluer/darker when deeper)

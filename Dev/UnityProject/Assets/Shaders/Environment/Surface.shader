@@ -1,6 +1,16 @@
 ﻿/**
  * The shader for the surface of the planet.
  * 
+ * The surface consists of four layers, each with properties that control how and where they appear.
+ * 
+ * Each layer's material properties are actually sampled over all three axes and then averaged. This
+ * implements a 3D texture effect that allows application of the material properties to the entire
+ * surface without the need for a mapping.
+ * 
+ * The layers are blended together using their respective height properties.
+ * 
+ * This is a surface shader, so lighting and any other advanced features are provided by Unity.
+ * 
  * Since each layer has the same properties, it is easier to document them here:
  * 
  * MinimumHeight:        The lowest height the layer will be displayed on. This is a scale, and is
@@ -280,7 +290,7 @@ Shader "Planet/Surface" {
 			 * The surface shader.
 			 */
 			void surf(Input input, inout SurfaceOutputStandard output) {
-				// Normalize the properties interpolated to the surface shader.
+				// Normalize the properties interpolated to the surface shader in object space.
 				float3 position = input.position / SurfaceRadius;
 				float3 surfaceNormal = normalize(input.surfaceNormal);
 
