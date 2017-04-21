@@ -55,7 +55,7 @@ Shader "Planet/Atmosphere" {
 			 * The number of intervals used to numerically approximate the integration of the
 			 * densities along a line of sight.
 			 */
-			int NumberOfIntegrationIntervals;
+			static const int NumberOfIntegrationIntervals = 32;
 			
 
 			float4 AirColor;
@@ -67,6 +67,9 @@ Shader "Planet/Atmosphere" {
 
 			float SurfaceHeight;
 			float WaterHeight;
+
+			float MinimumSurfaceHeight;
+			float MaximumSurfaceHeight;
 
 
 			/**
@@ -101,23 +104,42 @@ Shader "Planet/Atmosphere" {
 
 				float3 position = midPointPosition - viewDirection * (height + SurfaceHeight) * sin(angle);
 
+				// 
+				float factor = 1.0;
+				float cutoff = MinimumSurfaceHeight + factor * (MaximumSurfaceHeight - MinimumSurfaceHeight);
+
+				float cutoffHeight = max(cutoff, WaterHeight);
+
 				// TODO Cache?
 				float4 lightPositionOrDirection = mul(unity_WorldToObject, _WorldSpaceLightPos0);
 				float3 lightDirection = lerp(-lightPositionOrDirection.xyz, normalize(lightPositionOrDirection.xyz - position), lightPositionOrDirection.w);
 
 				float3 lowestPoint = position - lightDirection * dot(position, lightDirection);
 
+				// 
+				float angleCutoff = 0.5;
+				float angleFalloff = saturate(-dot(normalize(position), lightDirection) / angleCutoff);
+
 				// TODO scale
-				float heightFalloff = 50.0;
-				float a = saturate((length(lowestPoint) - max(SurfaceHeight, WaterHeight)) / heightFalloff);
+				float heightFalloff = 50.0 + angleFalloff * 100.0;
+				float a = saturate((length(lowestPoint) - cutoffHeight) / heightFalloff + 1.0);
 
 				// TODO scale, 10.0 is hardcoded.
 				// TODO figure out why the dot product is the wrong way around
-				float distanceFalloff = 100.0 * (exp(length(lowestPoint) / max(SurfaceHeight, WaterHeight) * 10.0) - 1.0) / (exp(1.0 * 10.0) - 1.0);
-				float b = saturate(dot(position, lightDirection) / distanceFalloff);
+				//float distanceFalloff = 100.0 * (exp(length(lowestPoint) / max(SurfaceHeight, WaterHeight) * 10.0) - 1.0) / (exp(1.0 * 10.0) - 1.0);
+				//float b = saturate(dot(position, lightDirection) / distanceFalloff);
+
+				// 
+				float c = saturate((height + SurfaceHeight - cutoffHeight) / heightFalloff + 1.0);
+
+				// 
+				float side = sign(saturate(-dot(normalize(position), lightDirection)));
+
+				// TODO I forgot what I was doing, next time Gadget.
+				c = saturate(c + angleFalloff);
 
 				// TODO lerp between light side and dark side bla
-				float luminosity = lerp(1.0, a, b);
+				float luminosity = lerp(a, c, side);//lerp(1.0, a, b);
 				
 				// Atmospheric density from height: e ^ (-h / H)
 				return luminosity * exp(-height / ScaleHeight);

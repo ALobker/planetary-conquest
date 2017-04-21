@@ -39,6 +39,9 @@ public class Atmosphere : MonoBehaviour {
 
 		material.SetFloat("SurfaceHeight", planet.surface.Average);
 
+		material.SetFloat("MinimumSurfaceHeight", planet.surface.Minimum);
+		material.SetFloat("MaximumSurfaceHeight", planet.surface.Maximum);
+
 		if(planet.featuresWater) {
 			material.SetFloat("WaterHeight", planet.surface.Average * planet.water.Level);
 		}
