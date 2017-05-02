@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
                                             new Color(.29f, 0, .57f), //dark purple
                                             new Color(0, .57f, .57f), //aqua
                                             new Color(0,0,0) };
-    public static int[] playerColors = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }; // new int[11];
+    public static int[] playerColors = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // new int[11];
     public Transform planet;
 
     // Use this for initialization

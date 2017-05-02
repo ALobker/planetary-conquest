@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -40,7 +42,6 @@ public class UIOverlay : MonoBehaviour
             campParent = GameObject.Find("Camps").transform;
         cc = GetComponent<CreateCamps>();
 
-        //Texture2DArray arr = new Texture2DArray()
         int colorboxsize = Mathf.RoundToInt(Mathf.Min(500f * uiScale, Screen.height) / 10f);
         texBlocks = new Texture2D[10];
         for (int i = 0; i < 10; i++)
@@ -50,7 +51,7 @@ public class UIOverlay : MonoBehaviour
             {
                 for (int k = 0; k < colorboxsize; k++)
                 {
-                    texBlocks[i].SetPixel(j, k, GameManager.colors[GameManager.playerColors[i + 1]]);
+                    texBlocks[i].SetPixel(j, k, GameManager.colors[i + 1]);
                 }
             }
             texBlocks[i].Apply();
@@ -168,13 +169,14 @@ public class UIOverlay : MonoBehaviour
             if (GUI.Button(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), "Default"))
             //if (EditorGUI.DropdownButton(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), new GUIContent("Default"), FocusType.Keyboard))
             {
-                if(showDropdownFaction > -1)
+                if (showDropdownFaction > -1)
                     showDropdownFaction = -1;
                 else
                     showDropdownFaction = i;
                 showDropdownColor = -1;
             }
-            /*if(GameManager.playerColors[i] == 0) {
+            if (GameManager.playerColors[i + 1] == 0)
+            {
                 if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), "Rand"))
                 {
                     if (showDropdownColor > -1)
@@ -183,8 +185,10 @@ public class UIOverlay : MonoBehaviour
                         showDropdownColor = i;
                     showDropdownFaction = -1;
                 }
-            } else {*/
-                if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), texBlocks[i]))
+            }
+            else
+            {
+                if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), texBlocks[GameManager.playerColors[i+1]-1]))
                 {
                     if (showDropdownColor > -1)
                         showDropdownColor = -1;
@@ -192,7 +196,7 @@ public class UIOverlay : MonoBehaviour
                         showDropdownColor = i;
                     showDropdownFaction = -1;
                 }
-            //}
+            }
             GUI.Label(new Rect(col5, boxOffsetY + lineHeight * (i + 1), boxOffsetX + divide - col5, lineHeight), "-");
         }
         //chat
@@ -243,13 +247,47 @@ public class UIOverlay : MonoBehaviour
         }
         if (showDropdownColor > -1)
         {
-            GUI.Box(new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4, lineHeight * 3.5f), "Dropdown");
+            GUI.Box(new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4, lineHeight * 3.5f), "");
+            if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5, col5 - col4 + 10, lineHeight), "Rand"))
+            {
+                GameManager.playerColors[showDropdownColor + 1] = 0;
+                Debug.Log(intArrToString(GameManager.playerColors));
+                showDropdownColor = -1;
+            }
+            float offset = 0;
+            for(int i = 0; i < 10; i++) {
+                int index = Array.IndexOf(GameManager.playerColors, i + 1);
+                if(index > -1 && i + 1 != GameManager.playerColors[showDropdownColor + 1])
+                    continue;
+
+                offset += lineHeight + 5f;
+                if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5 + offset, col5 - col4 + 10, lineHeight), texBlocks[i]))
+                {
+                    GameManager.playerColors[showDropdownColor + 1] = i + 1;
+                    Debug.Log(intArrToString(GameManager.playerColors));
+                    showDropdownColor = -1;
+                }
+            }
         }
 
         //ready
 
         if (GUI.Button(new Rect((Screen.width - 200) / 2, campsY + buttonHeight + 10, 200, buttonHeight), "Start"))
         {
+            //set remaining colors
+            int[] available = Enumerable.Range(1, 10).Except(GameManager.playerColors).ToArray();
+            int[] shuffled = available.OrderBy(x => UnityEngine.Random.Range(0, 1f)).ToArray();
+            int shufind = 0;
+            for (int i = 0; i < 10; i++)
+            {
+                if (GameManager.playerColors[i + 1] == 0)
+                {
+                    GameManager.playerColors[i + 1] = shuffled[shufind];
+                    shufind++;
+                }
+            }
+            //Debug.Log(intArrToString(GameManager.playerColors));
+
             winningPlayer = 0;
             GameManager.gameState = GameManager.State.Playing;
             cc.CreateAllCamps();
@@ -352,5 +390,15 @@ public class UIOverlay : MonoBehaviour
         {
             GameManager.gameState = GameManager.State.MainMenu;
         }
+    }
+
+    public static string intArrToString(int[] arr)
+    {
+        string outstr = "";
+        foreach (int item in arr)
+        {
+            outstr += item + ",";
+        }
+        return outstr;
     }
 }
