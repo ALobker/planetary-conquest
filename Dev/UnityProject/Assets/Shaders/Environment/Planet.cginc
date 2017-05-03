@@ -84,13 +84,12 @@ void disableTangentSpaceTransformation(inout appdata_full data) {
  * the surface normal.
  */
 float3 calculateWeights(float3 surfaceNormal) {
-	// Get a measure of how close the surface normal is to each of the three cardinal
-	// axes. Since a dot product with a cardinal axis is just the corresponding
-	// component of the input vector, we can just use those directly instead.
+	// Get a measure of how close the surface normal is to each of the three cardinal axes. Since a
+	// dot product with a cardinal axis is just the corresponding component of the input vector, we
+	// can just use those directly instead.
 	float3 measures = abs(surfaceNormal);
 
-	// Use the measures to determine how much each cardinal axis contributes to the
-	// surface normal.
+	// Use the measures to determine how much each cardinal axis contributes to the surface normal.
 	return measures / (measures.x + measures.y + measures.z);
 }
 
@@ -117,10 +116,10 @@ float3 sampleNormal(sampler2D normals, float2 coordinates, float bitangentCorrec
 	float3 normalInTangentSpace = correctBitangent(UnpackNormal(tex2D(normals, coordinates)), bitangentCorrection);
 	float3 normalInObjectSpace = mul(tangentSpaceToObjectSpace, normalInTangentSpace);
 
-	// Flip the sampled normal over its tangent plane (in object space) if it is not
-	// on the same side of its tangent plane as the surface normal. This way it will
-	// always face outwards. This is necessary since normals have a direction, as
-	// opposed to the other values such as color, which are scalars.
+	// Flip the sampled normal over its tangent plane (in object space) if it is not on the same
+	// side of its tangent plane as the surface normal. This way it will always face outwards.
+	// This is necessary since normals have a direction, as opposed to the other values such as
+	// color, which are scalars.
 	return flip(normalInObjectSpace, stretch(dot(surfaceNormal, normal)), normal);
 }
 
@@ -170,19 +169,20 @@ float3 sampleLayerNormal(float3 position, float scale, sampler2D normals, float 
 	normal += sampleNormal(normals, coordinates.yz, bitangentCorrection, Y_AXIS, Z_AXIS, X_AXIS, surfaceNormal) * weights.x;
 	normal += sampleNormal(normals, coordinates.zx, bitangentCorrection, Z_AXIS, X_AXIS, Y_AXIS, surfaceNormal) * weights.y;
 
-	// If the weighted average is (near) the zero vector we can use the surface normal
-	// instead. This is analogous to taking a weighted average over the unit sphere,
+	// If the weighted average produces a normal that is (near) the zero vector we can use the
+	// surface normal instead. This is analogous to taking a weighted average over the unit sphere,
 	// because the exact centroid would then be (near) the surface normal.
 	normal = pick(normal, surfaceNormal, length(normal), EPSILON);
 
 	// Now we can safely make sure the normal has the unit length.
 	normal = normalize(normal);
 
-	// If the weighted average produces a normal that points inwards, we can use the
-	// inversion instead. This is analogous to taking a weighted average over the long
-	// angles of a unit sphere. This means it always produces a weighted average in the
-	// hemisphere centered on the surface normal (i.e. above the surface).
-	return stretch(dot(normal, surfaceNormal)) * normal;
+	// If the weighted average produces a normal that points inwards, we can use its rejection from
+	// the surface normal instead. This essentially clamps the normal into the hemisphere centered
+	// on the surface normal (i.e. onto the surface). Note that this can produce second order
+	// discontinuities, but this should not really be noticable since it essentially just bands the
+	// normals in the vertical plane.
+	return normalize(normal + saturate(-dot(normal, surfaceNormal)) * surfaceNormal);
 }
 
 /**

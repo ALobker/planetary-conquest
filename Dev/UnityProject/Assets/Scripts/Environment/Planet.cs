@@ -1,10 +1,9 @@
 ﻿// Lightmap UVs for baked lighting...
-// Fix tiny artifacts related to normals (floating point precision issues? renormalization of tiny values?)
 
 // introduce noise in the height/slope shader? -> use toggle & allow no noise around water level (also a toggle) -> noise() apparently doesn't work on most graphic cards
 // introduce clouds in atmosphere shader? (but no noise()... :( )
 
-// use scaling parameters in water shader, use substances/water shading, use density integration?
+// use scale parameters in water shader, use substances/water shading, use density integration?
 
 // clean up water/atmosphere shader like surface shader
 
