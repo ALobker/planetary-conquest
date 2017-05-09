@@ -34,6 +34,8 @@ public class UIOverlay : MonoBehaviour
      * - Credits
      ************/
     private float uiScale = 1f;
+    private float uiSlideOffset = 0;
+    private float uiSlideDir = 0;
 
     // Use this for initialization
     void Start()
@@ -61,7 +63,20 @@ public class UIOverlay : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (uiSlideDir != 0)
+        {
+            uiSlideOffset += Time.deltaTime * uiSlideDir * 2f;
+            if (uiSlideOffset > 1f)
+            {
+                uiSlideOffset = 1f;
+                uiSlideDir = 0;
+            }
+            else if (uiSlideOffset < 0)
+            {
+                uiSlideOffset = 0;
+                uiSlideDir = 0;
+            }
+        }
     }
 
     void OnGUI()
@@ -70,26 +85,35 @@ public class UIOverlay : MonoBehaviour
         GUI.skin.button.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.toggle.fontSize = Mathf.RoundToInt(25f * uiScale);
 
-        if (GameManager.gameState == GameManager.State.MainMenu)
-            DrawMainMenu();
-        else if (GameManager.gameState == GameManager.State.Playing)
+        if (GameManager.gameState == GameManager.State.Playing)
+        {
             DrawIngameUI();
-        else if (GameManager.gameState == GameManager.State.End)
-            DrawEndgameUI();
-        else if (GameManager.gameState == GameManager.State.SinglePlayerMenu)
-            DrawCreationMenu();
-        else if (GameManager.gameState == GameManager.State.MultiPlayerMenu)
-            DrawMultiplayerMenu();
-        else if (GameManager.gameState == GameManager.State.OptionsMenu)
-            DrawOptionsMenu();
+        }
         else
-            DrawCreationMenu();
+        {
+            DrawMainMenu();
+            if (GameManager.gameState == GameManager.State.MainMenu)
+            {
+                //
+            }
+            else if (GameManager.gameState == GameManager.State.End)
+                DrawEndgameUI();
+            else if (GameManager.gameState == GameManager.State.SinglePlayerMenu)
+                DrawCreationMenu();
+            else if (GameManager.gameState == GameManager.State.MultiPlayerMenu)
+                DrawMultiplayerMenu();
+            else if (GameManager.gameState == GameManager.State.OptionsMenu)
+                DrawOptionsMenu();
+            else
+                DrawCreationMenu();
+        }
     }
 
     private void DrawMainMenu()
     {
+        float xOffset = ((Screen.width - 200f * uiScale) / 2f) - Screen.width - subScreenOffset();
         int yOffset = Mathf.RoundToInt(Screen.height - (5 * 50 * uiScale)) / 2;
-        if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2, yOffset, 200 * uiScale, 50 * uiScale), "Tutorial"))
+        if (GUI.Button(new Rect(xOffset, yOffset, 200 * uiScale, 50 * uiScale), "Tutorial"))
         {
             selectedPlayers = 3;
             selectedSize = 1;
@@ -98,20 +122,32 @@ public class UIOverlay : MonoBehaviour
             cc.CreateAllCamps(true);
             GameManager.gameState = GameManager.State.Playing;
         }
-        else if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2, yOffset + 50 * uiScale, 200 * uiScale, 50 * uiScale), "Single Player"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + 50 * uiScale, 200 * uiScale, 50 * uiScale), "Single Player"))
+        {
+            uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.SinglePlayerMenu;
-        else if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2, yOffset + 100 * uiScale, 200 * uiScale, 50 * uiScale), "Multiplayer"))
+        }
+        else if (GUI.Button(new Rect(xOffset, yOffset + 100 * uiScale, 200 * uiScale, 50 * uiScale), "Multiplayer"))
+        {
+            uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.MultiPlayerMenu;
-        else if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2, yOffset + 150 * uiScale, 200 * uiScale, 50 * uiScale), "Options"))
+        }
+        else if (GUI.Button(new Rect(xOffset, yOffset + 150 * uiScale, 200 * uiScale, 50 * uiScale), "Options"))
+        {
+            uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.OptionsMenu;
-        else if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2, yOffset + 200 * uiScale, 200 * uiScale, 50 * uiScale), "Credits"))
+        }
+        else if (GUI.Button(new Rect(xOffset, yOffset + 200 * uiScale, 200 * uiScale, 50 * uiScale), "Credits"))
+        {
+            uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.CreditsMenu;
+        }
     }
 
     private void DrawCreationMenu()
     {
         int buttonHeight = 35;
-        int offsetX = (Screen.width - 600) / 2;
+        float offsetX = ((Screen.width - 600f) / 2f) - subScreenOffset();
         int playersY = 100;
         int campsY = playersY + buttonHeight + 10;
 
@@ -152,7 +188,7 @@ public class UIOverlay : MonoBehaviour
 
 
         float boxWidth = Mathf.Min(800f * uiScale, Screen.width), boxHeight = Mathf.Min(500f * uiScale, Screen.height);
-        float boxOffsetX = (Screen.width - boxWidth) / 2f, boxOffsetY = (Screen.height - boxHeight) / 2f;
+        float boxOffsetX = (Screen.width - boxWidth) / 2f - subScreenOffset(), boxOffsetY = (Screen.height - boxHeight) / 2f;
         float divide = (boxWidth * 3f / 4f), colblocks = 7f;
         float col1 = boxOffsetX, col2 = boxOffsetX + 2f * divide / colblocks, col3 = boxOffsetX + 3f * divide / colblocks, col4 = boxOffsetX + 5f * divide / colblocks, col5 = boxOffsetX + 6f * divide / colblocks;
         float lineHeight = boxHeight / 12f;
@@ -167,7 +203,6 @@ public class UIOverlay : MonoBehaviour
             GUI.Label(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), "Player " + (i + 1));
             GUI.Label(new Rect(col2, boxOffsetY + lineHeight * (i + 1), col3 - col2, lineHeight), "0");
             if (GUI.Button(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), "Default"))
-            //if (EditorGUI.DropdownButton(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), new GUIContent("Default"), FocusType.Keyboard))
             {
                 if (showDropdownFaction > -1)
                     showDropdownFaction = -1;
@@ -234,7 +269,6 @@ public class UIOverlay : MonoBehaviour
         //difficulty
         //destruction
         //TODO: dropdowns maken
-        //TODO: kleuren exclusive maken
         //TODO: player disablen als niet gekozen wordt
 
         //show dropdowns
@@ -247,7 +281,8 @@ public class UIOverlay : MonoBehaviour
         }
         if (showDropdownColor > -1)
         {
-            GUI.Box(new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4, lineHeight * 3.5f), "");
+            int numColors = GameManager.playerColors.Count(i => i == 0) + (GameManager.playerColors[showDropdownColor + 1] != 0 ? 1 : 0);
+            GUI.Box(new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4 + 20, lineHeight * numColors + 5f), "");
             if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5, col5 - col4 + 10, lineHeight), "Rand"))
             {
                 GameManager.playerColors[showDropdownColor + 1] = 0;
@@ -260,11 +295,11 @@ public class UIOverlay : MonoBehaviour
                 if(index > -1 && i + 1 != GameManager.playerColors[showDropdownColor + 1])
                     continue;
 
-                offset += lineHeight + 5f;
-                if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5 + offset, col5 - col4 + 10, lineHeight), texBlocks[i]))
+                offset += lineHeight;
+                if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5 + offset, col5 - col4 + 10, (lineHeight - 5f)), texBlocks[i]))
                 {
                     GameManager.playerColors[showDropdownColor + 1] = i + 1;
-                    Debug.Log(intArrToString(GameManager.playerColors));
+                    //Debug.Log(intArrToString(GameManager.playerColors));
                     showDropdownColor = -1;
                 }
             }
@@ -272,7 +307,7 @@ public class UIOverlay : MonoBehaviour
 
         //ready
 
-        if (GUI.Button(new Rect((Screen.width - 200) / 2, campsY + buttonHeight + 10, 200, buttonHeight), "Start"))
+        if (GUI.Button(new Rect((Screen.width - 200) / 2 - subScreenOffset(), campsY + buttonHeight + 10, 200, buttonHeight), "Start"))
         {
             //set remaining colors
             int[] available = Enumerable.Range(1, 10).Except(GameManager.playerColors).ToArray();
@@ -292,9 +327,10 @@ public class UIOverlay : MonoBehaviour
             GameManager.gameState = GameManager.State.Playing;
             cc.CreateAllCamps();
         }
-        if (GUI.Button(new Rect(50, Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
+        if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
-            GameManager.gameState = GameManager.State.MainMenu;
+            uiSlideDir = -1f;
+            //GameManager.gameState = GameManager.State.MainMenu;
         }
     }
 
@@ -304,9 +340,10 @@ public class UIOverlay : MonoBehaviour
         //join lan
         //join online
         //host game
-        if (GUI.Button(new Rect(50, Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
+        if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
-            GameManager.gameState = GameManager.State.MainMenu;
+            uiSlideDir = -1f;
+            //GameManager.gameState = GameManager.State.MainMenu;
         }
     }
 
@@ -319,18 +356,19 @@ public class UIOverlay : MonoBehaviour
 
         //ui size
         float currentPos = Mathf.Log(uiScale) / Mathf.Log(2);
-        float scale = Mathf.Round(GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2, Screen.height / 2 - 20, 300, 30 * uiScale), currentPos, -1f, 1f) * 10f) / 10f;
+        float scale = Mathf.Round(GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 20, 300, 30 * uiScale), currentPos, -1f, 1f) * 10f) / 10f;
         uiScale = Mathf.Pow(2f, scale);
-        GUI.Label(new Rect((Screen.width - 300 - 35f * uiScale) / 2, Screen.height / 2, 35 * uiScale + 5, 25 * uiScale + 5), "0.5");
-        GUI.Label(new Rect((Screen.width - 15f * uiScale) / 2, Screen.height / 2, 15 * uiScale, 25 * uiScale + 5), "1");
-        GUI.Label(new Rect((Screen.width + 300 - 15f * uiScale) / 2, Screen.height / 2, 15 * uiScale, 25 * uiScale + 5), "2");
+        GUI.Label(new Rect((Screen.width - 300 - 35f * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 35 * uiScale + 5, 25 * uiScale + 5), "0.5");
+        GUI.Label(new Rect((Screen.width - 15f * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 15 * uiScale, 25 * uiScale + 5), "1");
+        GUI.Label(new Rect((Screen.width + 300 - 15f * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 15 * uiScale, 25 * uiScale + 5), "2");
 
         //colorblind mode
         //"Off"
         //"Deuteranopia/Protanopia"
-        if (GUI.Button(new Rect(50, Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
+        if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
-            GameManager.gameState = GameManager.State.MainMenu;
+            uiSlideDir = -1f;
+            //GameManager.gameState = GameManager.State.MainMenu;
         }
     }
 
@@ -400,5 +438,12 @@ public class UIOverlay : MonoBehaviour
             outstr += item + ",";
         }
         return outstr;
+    }
+
+    private float subScreenOffset()
+    {
+        //float offset = 0.5f - 0.5f * Mathf.Cos(uiSlideOffset * Mathf.PI);
+        float offset = 0.5f + 0.5f * (float)Math.Tanh(5.0 * (uiSlideOffset - 0.5));
+        return (offset - 1) * Screen.width;
     }
 }
