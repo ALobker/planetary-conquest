@@ -22,6 +22,11 @@ public class GameManager : MonoBehaviour
                                             new Color(0, .57f, .57f), //aqua
                                             new Color(0,0,0) };
     public static int[] playerColors = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // new int[11];
+    public static int[] playerType = { 1, 3, 3, 0, 0, 0, 0, 0, 0, 0 };
+    public static int[] playerCiv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    public static string[] civNames = { "Random", "A", "B", "C" };
+    public static string[] typeNames = { "None", "Player", "Easy", "Medium", "Hard" };
+
     public Transform planet;
 
     // Use this for initialization

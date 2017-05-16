@@ -14,8 +14,11 @@ public class UIOverlay : MonoBehaviour
     private int selectedPlayers = 3, selectedSize = 0;
     private int winningPlayer = 0;
 
+    private int showDropdownType = -1;
     private int showDropdownFaction = -1;
     private int showDropdownColor = -1;
+    private Rect popupSize = new Rect();
+
     Texture2D[] texBlocks;
 
     /************
@@ -186,13 +189,14 @@ public class UIOverlay : MonoBehaviour
             cc.numCamps = 80;
         }
 
-
+        //ui settings
         float boxWidth = Mathf.Min(800f * uiScale, Screen.width), boxHeight = Mathf.Min(500f * uiScale, Screen.height);
         float boxOffsetX = (Screen.width - boxWidth) / 2f - subScreenOffset(), boxOffsetY = (Screen.height - boxHeight) / 2f;
         float divide = (boxWidth * 3f / 4f), colblocks = 7f;
         float col1 = boxOffsetX, col2 = boxOffsetX + 2f * divide / colblocks, col3 = boxOffsetX + 3f * divide / colblocks, col4 = boxOffsetX + 5f * divide / colblocks, col5 = boxOffsetX + 6f * divide / colblocks;
         float lineHeight = boxHeight / 12f;
 
+        //main ui area
         GUI.Label(new Rect(col1, boxOffsetY, col2 - col1, lineHeight), "Players");
         GUI.Label(new Rect(col2, boxOffsetY, col3 - col2, lineHeight), "Ping");
         GUI.Label(new Rect(col3, boxOffsetY, col4 - col3, lineHeight), "Faction/Civ/Race");
@@ -200,39 +204,58 @@ public class UIOverlay : MonoBehaviour
         GUI.Label(new Rect(col5, boxOffsetY, boxOffsetX + divide - col5, lineHeight), "Team");
         for (int i = 0; i < 10; i++)
         {
-            GUI.Label(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), "Player " + (i + 1));
-            GUI.Label(new Rect(col2, boxOffsetY + lineHeight * (i + 1), col3 - col2, lineHeight), "0");
-            if (GUI.Button(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), "Default"))
+            if (i == 0)
             {
-                if (showDropdownFaction > -1)
+                GUI.Label(new Rect(col1, boxOffsetY + lineHeight, col2 - col1, lineHeight), "Player");
+            } else {
+                if (GUI.Button(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), GameManager.typeNames[GameManager.playerType[i]])) //"Player " + (i + 1)
+                {
+                    if (showDropdownType > -1 && showDropdownType == i)
+                        showDropdownType = -1;
+                    else
+                        showDropdownType = i;
+                    showDropdownFaction = -1;
+                    showDropdownColor = -1;
+                }
+            }
+            if(GameManager.playerType[i] == 0)
+                GUI.enabled = false;
+            GUI.Label(new Rect(col2, boxOffsetY + lineHeight * (i + 1), col3 - col2, lineHeight), "0");
+            if (GUI.Button(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), GameManager.civNames[GameManager.playerCiv[i]]))
+            {
+                if (showDropdownFaction > -1 && showDropdownFaction == i)
                     showDropdownFaction = -1;
                 else
                     showDropdownFaction = i;
+                showDropdownType = -1;
                 showDropdownColor = -1;
             }
             if (GameManager.playerColors[i + 1] == 0)
             {
                 if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), "Rand"))
                 {
-                    if (showDropdownColor > -1)
+                    if (showDropdownColor > -1 && showDropdownColor == i)
                         showDropdownColor = -1;
                     else
                         showDropdownColor = i;
+                    showDropdownType = -1;
                     showDropdownFaction = -1;
                 }
             }
             else
             {
-                if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), texBlocks[GameManager.playerColors[i+1]-1]))
+                if (GUI.Button(new Rect(col4, boxOffsetY + lineHeight * (i + 1), col5 - col4, lineHeight), texBlocks[GameManager.playerColors[i + 1] - 1]))
                 {
-                    if (showDropdownColor > -1)
+                    if (showDropdownColor > -1 && showDropdownColor == i)
                         showDropdownColor = -1;
                     else
                         showDropdownColor = i;
+                    showDropdownType = -1;
                     showDropdownFaction = -1;
                 }
             }
             GUI.Label(new Rect(col5, boxOffsetY + lineHeight * (i + 1), boxOffsetX + divide - col5, lineHeight), "-");
+            GUI.enabled = true;
         }
         //chat
         //right col
@@ -264,51 +287,49 @@ public class UIOverlay : MonoBehaviour
             selectedSize = 4;
             cc.numCamps = 80;
         }
-        //impassible
-        //ai settings
-        //difficulty
-        //destruction
-        //TODO: dropdowns maken
+        //TODO: impassible
+        //TODO: destruction
         //TODO: player disablen als niet gekozen wordt
 
+
         //show dropdowns
+        if (showDropdownType > -1)
+        {
+            popupSize = new Rect(col1, boxOffsetY + lineHeight * (showDropdownType + 2), col2 - col1, lineHeight * 4f + 10f);
+            GUI.Window(0, popupSize, DrawDropdown, "");
+        }
         if (showDropdownFaction > -1)
         {
-            GUI.Box(new Rect(col3, boxOffsetY + lineHeight * (showDropdownFaction + 2), col4 - col3, lineHeight * 3.5f), "Dropdown");
-            GUI.Button(new Rect(col3 + 5, boxOffsetY + lineHeight * (showDropdownFaction + 2) + 5, col4 - col3 - 10, lineHeight), "A");
-            GUI.Button(new Rect(col3 + 5, boxOffsetY + lineHeight * (showDropdownFaction + 3) + 10, col4 - col3 - 10, lineHeight), "B");
-            GUI.Button(new Rect(col3 + 5, boxOffsetY + lineHeight * (showDropdownFaction + 4) + 15, col4 - col3 - 10, lineHeight), "C");
+            popupSize = new Rect(col3, boxOffsetY + lineHeight * (showDropdownFaction + 2), col4 - col3, lineHeight * 4f + 10f);
+            GUI.Window(1, popupSize, DrawDropdown, "");
         }
         if (showDropdownColor > -1)
         {
             int numColors = GameManager.playerColors.Count(i => i == 0) + (GameManager.playerColors[showDropdownColor + 1] != 0 ? 1 : 0);
-            GUI.Box(new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4 + 20, lineHeight * numColors + 5f), "");
-            if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5, col5 - col4 + 10, lineHeight), "Rand"))
-            {
-                GameManager.playerColors[showDropdownColor + 1] = 0;
-                Debug.Log(intArrToString(GameManager.playerColors));
-                showDropdownColor = -1;
-            }
-            float offset = 0;
-            for(int i = 0; i < 10; i++) {
-                int index = Array.IndexOf(GameManager.playerColors, i + 1);
-                if(index > -1 && i + 1 != GameManager.playerColors[showDropdownColor + 1])
-                    continue;
-
-                offset += lineHeight;
-                if (GUI.Button(new Rect(col4 + 5, boxOffsetY + lineHeight * (showDropdownColor + 2) + 5 + offset, col5 - col4 + 10, (lineHeight - 5f)), texBlocks[i]))
-                {
-                    GameManager.playerColors[showDropdownColor + 1] = i + 1;
-                    //Debug.Log(intArrToString(GameManager.playerColors));
-                    showDropdownColor = -1;
-                }
-            }
+            popupSize = new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4 + 20, (lineHeight - 5f) * numColors + 15f);
+            GUI.Window(2, popupSize, DrawDropdown, "");
         }
 
-        //ready
 
+        //main buttons
         if (GUI.Button(new Rect((Screen.width - 200) / 2 - subScreenOffset(), campsY + buttonHeight + 10, 200, buttonHeight), "Start"))
         {
+            //set players by skipping every 'none'
+            for (int i = 0; i < 10; i++)
+            {
+                if (GameManager.playerType[i] > 0)
+                {
+                    //
+                }
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                if (GameManager.playerType[i] == 0)
+                {
+                    //
+                }
+            }
+
             //set remaining colors
             int[] available = Enumerable.Range(1, 10).Except(GameManager.playerColors).ToArray();
             int[] shuffled = available.OrderBy(x => UnityEngine.Random.Range(0, 1f)).ToArray();
@@ -330,7 +351,60 @@ public class UIOverlay : MonoBehaviour
         if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
             uiSlideDir = -1f;
-            //GameManager.gameState = GameManager.State.MainMenu;
+        }
+    }
+
+    private void DrawDropdown(int windowID)
+    {
+        float offset = 0;
+        float lineHeight = Mathf.Min(500f * uiScale, Screen.height) / 12f;
+        if (windowID == 0)
+        {
+            for (int i = 0; i < GameManager.typeNames.Length; i++)
+            {
+                if (i == 1) continue;
+                if (GUI.Button(new Rect(5, 5 + offset, popupSize.width - 10, lineHeight), GameManager.typeNames[i]))
+                {
+                    GameManager.playerType[showDropdownType] = i;
+                    showDropdownType = -1;
+                }
+                offset += lineHeight;
+            }
+        }
+        else if (windowID == 1)
+        {
+            for (int i = 0; i < GameManager.civNames.Length; i++)
+            {
+                if (GUI.Button(new Rect(5, 5 + offset, popupSize.width - 10, lineHeight), GameManager.civNames[i]))
+                {
+                    GameManager.playerCiv[showDropdownFaction] = i;
+                    showDropdownFaction = -1;
+                }
+                offset += lineHeight;
+            }
+        }
+        else if (windowID == 2)
+        {
+            if (GUI.Button(new Rect(5, 5, popupSize.width - 10, lineHeight), "Rand"))
+            {
+                GameManager.playerColors[showDropdownColor + 1] = 0;
+                //Debug.Log(intArrToString(GameManager.playerColors));
+                showDropdownColor = -1;
+            }
+            for (int i = 1; i <= 10; i++)
+            {
+                int index = Array.IndexOf(GameManager.playerColors, i);
+                if (index > -1 && i != GameManager.playerColors[showDropdownColor + 1])
+                    continue;
+
+                offset += lineHeight - 5f;
+                if (GUI.Button(new Rect(5, 10 + offset, popupSize.width - 10, (lineHeight - 5f)), texBlocks[i - 1]))
+                {
+                    GameManager.playerColors[showDropdownColor + 1] = i;
+                    //Debug.Log(intArrToString(GameManager.playerColors));
+                    showDropdownColor = -1;
+                }
+            }
         }
     }
 
@@ -426,6 +500,7 @@ public class UIOverlay : MonoBehaviour
         GUI.Label(new Rect((Screen.width - 200) / 2, Screen.height / 2 - 100, 200, 100), "Player " + winningPlayer + " was victorious");
         if (GUI.Button(new Rect((Screen.width - 200) / 2, Screen.height / 2, 200, 100), "Main Menu"))
         {
+            uiSlideOffset = 0;
             GameManager.gameState = GameManager.State.MainMenu;
         }
     }
