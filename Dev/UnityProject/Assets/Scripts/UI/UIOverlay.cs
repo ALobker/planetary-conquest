@@ -9,9 +9,12 @@ using UnityEngine.UI;
 public class UIOverlay : MonoBehaviour
 {
     public Transform campParent;
+    public Texture2D buttonBackground;
+
+    public float volumeMusic = 0.9f, volumeEffects = 0.9f;
 
     private CreateCamps cc;
-    private int selectedPlayers = 3, selectedSize = 0;
+    private int selectedSize = 0;
     private int winningPlayer = 0;
 
     private int showDropdownType = -1;
@@ -87,6 +90,9 @@ public class UIOverlay : MonoBehaviour
         GUI.skin.label.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.button.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.toggle.fontSize = Mathf.RoundToInt(25f * uiScale);
+        if (buttonBackground != null)
+            GUI.skin.button.normal.background = buttonBackground;
+        GUI.skin.button.normal.textColor = Color.white;
 
         if (GameManager.gameState == GameManager.State.Playing)
         {
@@ -96,9 +102,7 @@ public class UIOverlay : MonoBehaviour
         {
             DrawMainMenu();
             if (GameManager.gameState == GameManager.State.MainMenu)
-            {
-                //
-            }
+            { }
             else if (GameManager.gameState == GameManager.State.End)
                 DrawEndgameUI();
             else if (GameManager.gameState == GameManager.State.SinglePlayerMenu)
@@ -107,6 +111,8 @@ public class UIOverlay : MonoBehaviour
                 DrawMultiplayerMenu();
             else if (GameManager.gameState == GameManager.State.OptionsMenu)
                 DrawOptionsMenu();
+            else if (GameManager.gameState == GameManager.State.CreditsMenu)
+                DrawCreditsMenu();
             else
                 DrawCreationMenu();
         }
@@ -114,33 +120,38 @@ public class UIOverlay : MonoBehaviour
 
     private void DrawMainMenu()
     {
+        float lineHeight = 50;
         float xOffset = ((Screen.width - 200f * uiScale) / 2f) - Screen.width - subScreenOffset();
-        int yOffset = Mathf.RoundToInt(Screen.height - (5 * 50 * uiScale)) / 2;
-        if (GUI.Button(new Rect(xOffset, yOffset, 200 * uiScale, 50 * uiScale), "Tutorial"))
+        float yOffset = Mathf.Round(Screen.height - (5 * lineHeight * uiScale)) / 2;
+        if (GUI.Button(new Rect(xOffset, yOffset, 200 * uiScale, lineHeight * uiScale), "Tutorial"))
         {
-            selectedPlayers = 3;
-            selectedSize = 1;
-            cc.numCamps = 12;
+            selectedSize = 0;
+            cc.numCamps = 6;
+            for (int i = 1; i <= 3; i++)
+            {
+                GameManager.playerColors[i] = i;
+            }
+            uiSlideOffset = 1;
             winningPlayer = 0;
             cc.CreateAllCamps(true);
             GameManager.gameState = GameManager.State.Playing;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + 50 * uiScale, 200 * uiScale, 50 * uiScale), "Single Player"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * uiScale, 200 * uiScale, lineHeight * uiScale), "Single Player"))
         {
             uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.SinglePlayerMenu;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + 100 * uiScale, 200 * uiScale, 50 * uiScale), "Multiplayer"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 2 * uiScale, 200 * uiScale, lineHeight * uiScale), "Multiplayer"))
         {
             uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.MultiPlayerMenu;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + 150 * uiScale, 200 * uiScale, 50 * uiScale), "Options"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 3 * uiScale, 200 * uiScale, lineHeight * uiScale), "Options"))
         {
             uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.OptionsMenu;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + 200 * uiScale, 200 * uiScale, 50 * uiScale), "Credits"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 4 * uiScale, 200 * uiScale, lineHeight * uiScale), "Credits"))
         {
             uiSlideDir = 1f;
             GameManager.gameState = GameManager.State.CreditsMenu;
@@ -150,44 +161,6 @@ public class UIOverlay : MonoBehaviour
     private void DrawCreationMenu()
     {
         int buttonHeight = 35;
-        float offsetX = ((Screen.width - 600f) / 2f) - subScreenOffset();
-        int playersY = 100;
-        int campsY = playersY + buttonHeight + 10;
-
-        GUI.Label(new Rect(offsetX, playersY, 100, buttonHeight), "Players");
-        for (int i = 2; i <= 10; i++)
-        {
-            if (GUI.Toggle(new Rect(offsetX + 50 * i, playersY, 50, buttonHeight), selectedPlayers == i, "" + i))
-                selectedPlayers = i;
-        }
-        GameManager.numPlayers = selectedPlayers;
-
-        GUI.Label(new Rect(offsetX, campsY, 100, buttonHeight), "Camps");
-        if (GUI.Toggle(new Rect(offsetX + 100, campsY, 100, buttonHeight), selectedSize == 0, "Small"))
-        {
-            selectedSize = 0;
-            cc.numCamps = 6;
-        }
-        if (GUI.Toggle(new Rect(offsetX + 200, campsY, 100, buttonHeight), selectedSize == 1, "Medium"))
-        {
-            selectedSize = 1;
-            cc.numCamps = 12;
-        }
-        if (GUI.Toggle(new Rect(offsetX + 300, campsY, 100, buttonHeight), selectedSize == 2, "Large"))
-        {
-            selectedSize = 2;
-            cc.numCamps = 25;
-        }
-        if (GUI.Toggle(new Rect(offsetX + 400, campsY, 100, buttonHeight), selectedSize == 3, "Huge"))
-        {
-            selectedSize = 3;
-            cc.numCamps = 50;
-        }
-        if (GUI.Toggle(new Rect(offsetX + 500, campsY, 100, buttonHeight), selectedSize == 4, "Giant"))
-        {
-            selectedSize = 4;
-            cc.numCamps = 80;
-        }
 
         //ui settings
         float boxWidth = Mathf.Min(800f * uiScale, Screen.width), boxHeight = Mathf.Min(500f * uiScale, Screen.height);
@@ -207,7 +180,9 @@ public class UIOverlay : MonoBehaviour
             if (i == 0)
             {
                 GUI.Label(new Rect(col1, boxOffsetY + lineHeight, col2 - col1, lineHeight), "Player");
-            } else {
+            }
+            else
+            {
                 if (GUI.Button(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), GameManager.typeNames[GameManager.playerType[i]])) //"Player " + (i + 1)
                 {
                     if (showDropdownType > -1 && showDropdownType == i)
@@ -218,7 +193,7 @@ public class UIOverlay : MonoBehaviour
                     showDropdownColor = -1;
                 }
             }
-            if(GameManager.playerType[i] == 0)
+            if (GameManager.playerType[i] == 0)
                 GUI.enabled = false;
             GUI.Label(new Rect(col2, boxOffsetY + lineHeight * (i + 1), col3 - col2, lineHeight), "0");
             if (GUI.Button(new Rect(col3, boxOffsetY + lineHeight * (i + 1), col4 - col3, lineHeight), GameManager.civNames[GameManager.playerCiv[i]]))
@@ -289,7 +264,6 @@ public class UIOverlay : MonoBehaviour
         }
         //TODO: impassible
         //TODO: destruction
-        //TODO: player disablen als niet gekozen wordt
 
 
         //show dropdowns
@@ -312,22 +286,48 @@ public class UIOverlay : MonoBehaviour
 
 
         //main buttons
-        if (GUI.Button(new Rect((Screen.width - 200) / 2 - subScreenOffset(), campsY + buttonHeight + 10, 200, buttonHeight), "Start"))
+        if (GUI.Button(new Rect(Screen.width - 250 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Start"))
         {
             //set players by skipping every 'none'
+            int[] playercolors = new int[11];
+            int[] playertype = new int[10];
+            int[] playerciv = new int[10];
+            int index = 0;
             for (int i = 0; i < 10; i++)
             {
                 if (GameManager.playerType[i] > 0)
                 {
-                    //
+                    playercolors[index + 1] = GameManager.playerColors[i + 1];
+                    playertype[index] = GameManager.playerType[i];
+                    playerciv[index] = GameManager.playerCiv[i];
+                    index++;
                 }
             }
+            GameManager.numPlayers = index;
             for (int i = 0; i < 10; i++)
             {
                 if (GameManager.playerType[i] == 0)
                 {
-                    //
+                    playercolors[index + 1] = 0;
+                    playertype[index] = 0;
+                    playerciv[index] = 0;
+                    index++;
                 }
+            }
+            //Debug.Log(intArrToString(GameManager.playerColors));
+            //Debug.Log(intArrToString(GameManager.playerType));
+            //Debug.Log(intArrToString(GameManager.playerCiv));
+            //Debug.Log(intArrToString(playercolors));
+            //Debug.Log(intArrToString(playertype));
+            //Debug.Log(intArrToString(playerciv));
+            GameManager.playerColors = playercolors;
+            GameManager.playerType = playertype;
+            GameManager.playerCiv = playerciv;
+
+            if (GameManager.numPlayers > 6 && selectedSize == 0)
+            {
+                selectedSize = 1;
+                cc.numCamps = 12;
             }
 
             //set remaining colors
@@ -425,8 +425,12 @@ public class UIOverlay : MonoBehaviour
     {
         int buttonHeight = 35;
         //sound effect volume
+        volumeEffects = GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 220, 300, 30 * uiScale), volumeEffects, 0, 1f);
+        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 220, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeEffects * 100));
 
         //music volume
+        volumeMusic = GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 120, 300, 30 * uiScale), volumeMusic, 0, 1f);
+        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 120, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeMusic * 100));
 
         //ui size
         float currentPos = Mathf.Log(uiScale) / Mathf.Log(2);
@@ -445,6 +449,22 @@ public class UIOverlay : MonoBehaviour
             //GameManager.gameState = GameManager.State.MainMenu;
         }
     }
+
+    private void DrawCreditsMenu()
+    {
+        int buttonHeight = 35;
+        //about us
+        //art
+        //models
+        //programming
+        //design
+        //ai
+        if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
+        {
+            uiSlideDir = -1f;
+        }
+    }
+
 
     private void DrawIngameUI()
     {
@@ -497,11 +517,12 @@ public class UIOverlay : MonoBehaviour
 
     private void DrawEndgameUI()
     {
-        GUI.Label(new Rect((Screen.width - 200) / 2, Screen.height / 2 - 100, 200, 100), "Player " + winningPlayer + " was victorious");
-        if (GUI.Button(new Rect((Screen.width - 200) / 2, Screen.height / 2, 200, 100), "Main Menu"))
+        int buttonHeight = 35;
+        GUI.Label(new Rect((Screen.width - 300 * uiScale) / 2 - subScreenOffset(), Screen.height / 2 - 100, 300 * uiScale, buttonHeight * 2 * uiScale), "Player " + winningPlayer + " was victorious");
+        if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 200 * uiScale, buttonHeight * uiScale), "Main Menu"))
         {
-            uiSlideOffset = 0;
-            GameManager.gameState = GameManager.State.MainMenu;
+            uiSlideDir = -1f;
+            //GameManager.gameState = GameManager.State.MainMenu;
         }
     }
 
@@ -517,6 +538,8 @@ public class UIOverlay : MonoBehaviour
 
     private float subScreenOffset()
     {
+        if (uiSlideOffset == 0 || uiSlideOffset == 1)
+            return (uiSlideOffset - 1) * Screen.width;
         //float offset = 0.5f - 0.5f * Mathf.Cos(uiSlideOffset * Mathf.PI);
         float offset = 0.5f + 0.5f * (float)Math.Tanh(5.0 * (uiSlideOffset - 0.5));
         return (offset - 1) * Screen.width;

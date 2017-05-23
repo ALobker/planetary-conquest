@@ -199,9 +199,18 @@ public class CreateCamps : MonoBehaviour
         }
         else
         {
-            camps[0].faction = 1;
-            camps[5].faction = 2;
-            camps[11].faction = 3;
+            if (camps.Count > 11)
+            {
+                camps[0].faction = 1;
+                camps[5].faction = 2;
+                camps[11].faction = 3;
+            }
+            else
+            {
+                camps[0].faction = 1;
+                camps[1].faction = 2;
+                camps[2].faction = 3;
+            }
         }
 
         //DrawConnections(camps);
