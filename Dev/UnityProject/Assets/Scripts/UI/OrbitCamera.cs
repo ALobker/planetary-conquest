@@ -124,7 +124,7 @@ public class OrbitCamera : MonoBehaviour
     private void ZoomIn()
     {
         _distance -= _zoomStep;
-        _distance = Mathf.Clamp(_distance, 2f, 5000f);
+        _distance = Mathf.Clamp(_distance, 2f, 500f);
         _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
         this.Rotate(_x, _y);
     }
@@ -136,7 +136,7 @@ public class OrbitCamera : MonoBehaviour
     private void ZoomOut()
     {
         _distance += _zoomStep;
-        _distance = Mathf.Clamp(_distance, 2f, 5000f);
+        _distance = Mathf.Clamp(_distance, 2f, 500f);
         _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
         this.Rotate(_x, _y);
     }

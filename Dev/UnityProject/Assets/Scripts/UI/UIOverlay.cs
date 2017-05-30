@@ -9,12 +9,13 @@ using UnityEngine.UI;
 public class UIOverlay : MonoBehaviour
 {
     public Transform campParent;
-    public Texture2D buttonBackground;
+    public GUISkin skin;
+    public AudioClip soundMenuNext, soundMenuPrev;
 
     public float volumeMusic = 0.9f, volumeEffects = 0.9f;
 
     private CreateCamps cc;
-    private int selectedSize = 0;
+    private int selectedSize = 1;
     private int winningPlayer = 0;
 
     private int showDropdownType = -1;
@@ -22,7 +23,9 @@ public class UIOverlay : MonoBehaviour
     private int showDropdownColor = -1;
     private Rect popupSize = new Rect();
 
-    Texture2D[] texBlocks;
+    private Texture2D[] texBlocks;
+
+    private AudioSource audioSource;
 
     /************
      * Menu
@@ -64,6 +67,8 @@ public class UIOverlay : MonoBehaviour
             }
             texBlocks[i].Apply();
         }
+
+        audioSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -87,11 +92,10 @@ public class UIOverlay : MonoBehaviour
 
     void OnGUI()
     {
+        GUI.skin = skin;
         GUI.skin.label.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.button.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.toggle.fontSize = Mathf.RoundToInt(25f * uiScale);
-        if (buttonBackground != null)
-            GUI.skin.button.normal.background = buttonBackground;
         GUI.skin.button.normal.textColor = Color.white;
 
         if (GameManager.gameState == GameManager.State.Playing)
@@ -121,8 +125,9 @@ public class UIOverlay : MonoBehaviour
     private void DrawMainMenu()
     {
         float lineHeight = 50;
-        float xOffset = ((Screen.width - 200f * uiScale) / 2f) - Screen.width - subScreenOffset();
+        float xOffset = ((Screen.width - 200f * uiScale) / 4f) - Screen.width - subScreenOffset();
         float yOffset = Mathf.Round(Screen.height - (5 * lineHeight * uiScale)) / 2;
+        GUI.Label(new Rect(xOffset, yOffset - lineHeight, 200 * uiScale, lineHeight * uiScale), "Main menu");
         if (GUI.Button(new Rect(xOffset, yOffset, 200 * uiScale, lineHeight * uiScale), "Tutorial"))
         {
             selectedSize = 0;
@@ -139,21 +144,33 @@ public class UIOverlay : MonoBehaviour
         else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * uiScale, 200 * uiScale, lineHeight * uiScale), "Single Player"))
         {
             uiSlideDir = 1f;
+            //play next
+            audioSource.clip = soundMenuNext;
+            audioSource.Play();
             GameManager.gameState = GameManager.State.SinglePlayerMenu;
         }
         else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 2 * uiScale, 200 * uiScale, lineHeight * uiScale), "Multiplayer"))
         {
             uiSlideDir = 1f;
+            //play next
+            audioSource.clip = soundMenuNext;
+            audioSource.Play();
             GameManager.gameState = GameManager.State.MultiPlayerMenu;
         }
         else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 3 * uiScale, 200 * uiScale, lineHeight * uiScale), "Options"))
         {
             uiSlideDir = 1f;
+            //play next
+            audioSource.clip = soundMenuNext;
+            audioSource.Play();
             GameManager.gameState = GameManager.State.OptionsMenu;
         }
         else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 4 * uiScale, 200 * uiScale, lineHeight * uiScale), "Credits"))
         {
             uiSlideDir = 1f;
+            //play next
+            audioSource.clip = soundMenuNext;
+            audioSource.Play();
             GameManager.gameState = GameManager.State.CreditsMenu;
         }
     }
@@ -167,7 +184,7 @@ public class UIOverlay : MonoBehaviour
         float boxOffsetX = (Screen.width - boxWidth) / 2f - subScreenOffset(), boxOffsetY = (Screen.height - boxHeight) / 2f;
         float divide = (boxWidth * 3f / 4f), colblocks = 7f;
         float col1 = boxOffsetX, col2 = boxOffsetX + 2f * divide / colblocks, col3 = boxOffsetX + 3f * divide / colblocks, col4 = boxOffsetX + 5f * divide / colblocks, col5 = boxOffsetX + 6f * divide / colblocks;
-        float lineHeight = boxHeight / 12f;
+        float lineHeight = Mathf.Round(boxHeight / 12f);
 
         //main ui area
         GUI.Label(new Rect(col1, boxOffsetY, col2 - col1, lineHeight), "Players");
@@ -181,18 +198,16 @@ public class UIOverlay : MonoBehaviour
             {
                 GUI.Label(new Rect(col1, boxOffsetY + lineHeight, col2 - col1, lineHeight), "Player");
             }
-            else
+            else if (GUI.Button(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), GameManager.typeNames[GameManager.playerType[i]])) //"Player " + (i + 1)
             {
-                if (GUI.Button(new Rect(col1, boxOffsetY + lineHeight * (i + 1), col2 - col1, lineHeight), GameManager.typeNames[GameManager.playerType[i]])) //"Player " + (i + 1)
-                {
-                    if (showDropdownType > -1 && showDropdownType == i)
-                        showDropdownType = -1;
-                    else
-                        showDropdownType = i;
-                    showDropdownFaction = -1;
-                    showDropdownColor = -1;
-                }
+                if (showDropdownType > -1 && showDropdownType == i)
+                    showDropdownType = -1;
+                else
+                    showDropdownType = i;
+                showDropdownFaction = -1;
+                showDropdownColor = -1;
             }
+
             if (GameManager.playerType[i] == 0)
                 GUI.enabled = false;
             GUI.Label(new Rect(col2, boxOffsetY + lineHeight * (i + 1), col3 - col2, lineHeight), "0");
@@ -280,7 +295,7 @@ public class UIOverlay : MonoBehaviour
         if (showDropdownColor > -1)
         {
             int numColors = GameManager.playerColors.Count(i => i == 0) + (GameManager.playerColors[showDropdownColor + 1] != 0 ? 1 : 0);
-            popupSize = new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4 + 20, (lineHeight - 5f) * numColors + 15f);
+            popupSize = new Rect(col4, boxOffsetY + lineHeight * (showDropdownColor + 2), col5 - col4, (lineHeight - 5f) * numColors + 15f);
             GUI.Window(2, popupSize, DrawDropdown, "");
         }
 
@@ -351,19 +366,28 @@ public class UIOverlay : MonoBehaviour
         if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
             uiSlideDir = -1f;
+            //play prev
+            audioSource.clip = soundMenuPrev;
+            audioSource.Play();
         }
     }
 
     private void DrawDropdown(int windowID)
     {
         float offset = 0;
-        float lineHeight = Mathf.Min(500f * uiScale, Screen.height) / 12f;
+        float lineHeight = Mathf.Round(Mathf.Min(500f * uiScale, Screen.height) / 12f);
         if (windowID == 0)
         {
             for (int i = 0; i < GameManager.typeNames.Length; i++)
             {
                 if (i == 1) continue;
-                if (GUI.Button(new Rect(5, 5 + offset, popupSize.width - 10, lineHeight), GameManager.typeNames[i]))
+
+                //selected option
+                string prefix = "";
+                if (GameManager.playerType[showDropdownType] == i)
+                    prefix = "* ";
+
+                if (GUI.Button(new Rect(5, 5f + offset, popupSize.width - 10, lineHeight), prefix + GameManager.typeNames[i]))
                 {
                     GameManager.playerType[showDropdownType] = i;
                     showDropdownType = -1;
@@ -375,7 +399,12 @@ public class UIOverlay : MonoBehaviour
         {
             for (int i = 0; i < GameManager.civNames.Length; i++)
             {
-                if (GUI.Button(new Rect(5, 5 + offset, popupSize.width - 10, lineHeight), GameManager.civNames[i]))
+                //selected option
+                string prefix = "";
+                if (GameManager.playerCiv[showDropdownFaction] == i)
+                    prefix = "* ";
+
+                if (GUI.Button(new Rect(5, 5f + offset, popupSize.width - 10, lineHeight), prefix + GameManager.civNames[i]))
                 {
                     GameManager.playerCiv[showDropdownFaction] = i;
                     showDropdownFaction = -1;
@@ -398,7 +427,7 @@ public class UIOverlay : MonoBehaviour
                     continue;
 
                 offset += lineHeight - 5f;
-                if (GUI.Button(new Rect(5, 10 + offset, popupSize.width - 10, (lineHeight - 5f)), texBlocks[i - 1]))
+                if (GUI.Button(new Rect(5, 10f + offset, popupSize.width - 10, (lineHeight - 5f)), texBlocks[i - 1]))
                 {
                     GameManager.playerColors[showDropdownColor + 1] = i;
                     //Debug.Log(intArrToString(GameManager.playerColors));
@@ -417,7 +446,9 @@ public class UIOverlay : MonoBehaviour
         if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
             uiSlideDir = -1f;
-            //GameManager.gameState = GameManager.State.MainMenu;
+            //play prev
+            audioSource.clip = soundMenuPrev;
+            audioSource.Play();
         }
     }
 
@@ -426,19 +457,20 @@ public class UIOverlay : MonoBehaviour
         int buttonHeight = 35;
         //sound effect volume
         volumeEffects = GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 220, 300, 30 * uiScale), volumeEffects, 0, 1f);
-        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 220, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeEffects * 100));
+        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 230, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeEffects * 100));
+        audioSource.volume = 0.5f * volumeEffects;
 
         //music volume
         volumeMusic = GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 120, 300, 30 * uiScale), volumeMusic, 0, 1f);
-        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 120, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeMusic * 100));
+        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 130, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeMusic * 100));
 
         //ui size
         float currentPos = Mathf.Log(uiScale) / Mathf.Log(2);
-        float scale = Mathf.Round(GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 20, 300, 30 * uiScale), currentPos, -1f, 1f) * 10f) / 10f;
+        float scale = Mathf.Round(GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 20, 300, 30 * uiScale), currentPos, -.5f, .5f) * 10f) / 10f;
         uiScale = Mathf.Pow(2f, scale);
-        GUI.Label(new Rect((Screen.width - 300 - 35f * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 35 * uiScale + 5, 25 * uiScale + 5), "0.5");
-        GUI.Label(new Rect((Screen.width - 15f * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 15 * uiScale, 25 * uiScale + 5), "1");
-        GUI.Label(new Rect((Screen.width + 300 - 15f * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 15 * uiScale, 25 * uiScale + 5), "2");
+        GUI.Label(new Rect((Screen.width - 300f - 30f * uiScale - 20f) / 2 - subScreenOffset(), Screen.height / 2, 30f * uiScale + 20f, 25 * uiScale + 5), "0.5");
+        GUI.Label(new Rect((Screen.width - 10f * uiScale - 20f) / 2 - subScreenOffset(), Screen.height / 2, 10f * uiScale + 20f, 25 * uiScale + 5), "1");
+        GUI.Label(new Rect((Screen.width + 300 - 10f * uiScale - 20f) / 2 - subScreenOffset(), Screen.height / 2, 10f * uiScale + 20f, 25 * uiScale + 5), "2");
 
         //colorblind mode
         //"Off"
@@ -446,7 +478,9 @@ public class UIOverlay : MonoBehaviour
         if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
             uiSlideDir = -1f;
-            //GameManager.gameState = GameManager.State.MainMenu;
+            //play prev
+            audioSource.clip = soundMenuPrev;
+            audioSource.Play();
         }
     }
 
@@ -462,6 +496,9 @@ public class UIOverlay : MonoBehaviour
         if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
             uiSlideDir = -1f;
+            //play prev
+            audioSource.clip = soundMenuPrev;
+            audioSource.Play();
         }
     }
 
@@ -480,15 +517,31 @@ public class UIOverlay : MonoBehaviour
             numCamps++;
         }
 
+        int lineHeight = Mathf.RoundToInt(36 * uiScale);
         GUIStyle defaultStyle = GUI.skin.label;
         int aliveFactions = 0;
         defaultStyle.normal.textColor = GameManager.colors[0];
-        GUI.Label(new Rect(10, 40, 300, 40), "Empty\t" + factionNumbers[0]);
+        defaultStyle.padding.left = 15;
+        GUI.Label(new Rect(0, 40, 250 * uiScale, lineHeight), "Empty\t" + factionNumbers[0], defaultStyle);
 
         for (int i = 1; i < factionNumbers.Length; i++)
         {
+            //background color
+            Texture2D tex = new Texture2D(100, 1, TextureFormat.ARGB32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            Color c = GameManager.colors[GameManager.playerColors[i]];
+            if (factionNumbers[i] == 0)
+                c = new Color(c.grayscale, c.grayscale, c.grayscale);
+            for (int j = 0; j < 100; j++)
+            {
+                c.a = (100f - j) / 100f;
+                tex.SetPixel(j, 0, c);
+            }
+            tex.Apply();
+
             defaultStyle.normal.textColor = GameManager.colors[GameManager.playerColors[i]];
-            GUI.Label(new Rect(10, 40 + i * 40, 300, 40), "Player " + i + "\t" + factionNumbers[i], defaultStyle);
+            defaultStyle.normal.background = tex;
+            GUI.Label(new Rect(0, 40 + i * (lineHeight + 3), 250 * uiScale, lineHeight), "Player " + i + "\t" + factionNumbers[i], defaultStyle);
             if (factionNumbers[i] > 0)
             {
                 aliveFactions++;
@@ -496,6 +549,7 @@ public class UIOverlay : MonoBehaviour
             }
         }
         defaultStyle.normal.textColor = Color.white;
+        defaultStyle.normal.background = null;
         if (aliveFactions <= 1)
         {
             cc.RemoveAllCamps();
@@ -522,7 +576,8 @@ public class UIOverlay : MonoBehaviour
         if (GUI.Button(new Rect((Screen.width - 200 * uiScale) / 2 - subScreenOffset(), Screen.height / 2, 200 * uiScale, buttonHeight * uiScale), "Main Menu"))
         {
             uiSlideDir = -1f;
-            //GameManager.gameState = GameManager.State.MainMenu;
+            audioSource.clip = soundMenuPrev;
+            audioSource.Play();
         }
     }
 

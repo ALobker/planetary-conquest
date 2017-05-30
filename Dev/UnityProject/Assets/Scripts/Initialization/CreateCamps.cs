@@ -436,7 +436,7 @@ public class CreateCamps : MonoBehaviour
                     points.Add(intersections[i]);
                 }
             }
-            DrawLine(points);
+            DrawLine(points, null);
         }
     }
 
@@ -502,11 +502,18 @@ public class CreateCamps : MonoBehaviour
                 }
             }
 
+            //reduce slightly
+            for (int i = 0; i < intersections.Count; i++)
+            {
+                float dist = Vector3.Distance(intersections[i], camp.transform.position);
+                intersections[i] = Vector3.Slerp(intersections[i], camp.transform.position, 0.05f / dist);
+            }
+
             //sort by angle
             List<Vector3> sortedIntersections = intersections.OrderBy(point => -DraggingInteraction.AngleSigned(point - camp.transform.position, camp.transform.right, camp.transform.up)).ToList();
 
             //connect all intersections (counter) clockwise
-            DrawLine(sortedIntersections);
+            DrawLine(sortedIntersections, camp);
             /*for (int i = 0; i < sortedIntersections.Count - 1; i++)
             {
                 DrawLine(sortedIntersections[i], sortedIntersections[i + 1]);
@@ -540,7 +547,7 @@ public class CreateCamps : MonoBehaviour
         }
     }*/
 
-    private void DrawLine(List<Vector3> points)
+    private void DrawLine(List<Vector3> points, CampScript camp)
     {
         GameObject myLine = new GameObject();
         myLine.name = "Border";
@@ -568,6 +575,9 @@ public class CreateCamps : MonoBehaviour
         }
         lr.positionCount = ind + 1;
         lr.SetPosition(ind, GetSurfacePoint(points[0]));
+
+        camp.border = myLine;
+        lr.material.color = GameManager.colors[GameManager.playerColors[camp.faction]];
     }
 
     //Overlay function because i want to use points instead of directions

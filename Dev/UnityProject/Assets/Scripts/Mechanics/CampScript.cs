@@ -10,6 +10,8 @@ public class CampScript : MonoBehaviour
     public Transform arrow;
     public TextMesh text;
     public GameObject progress;
+    public AudioSource audioSource;
+    public GameObject border;
 
     public CampScript[] neighbours;
     public CampScript selectedNeighbour;
@@ -38,6 +40,9 @@ public class CampScript : MonoBehaviour
         progress.GetComponent<Renderer>().material.SetFloat("_Cutoff", Mathf.Clamp(campHealth, 0.05f, 1f));
 
         cylinder.GetComponent<Renderer>().material.color = GameManager.colors[GameManager.playerColors[faction]];
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -129,6 +134,9 @@ public class CampScript : MonoBehaviour
         arrow.gameObject.SetActive(false);
 
         cylinder.GetComponent<Renderer>().material.color = GameManager.colors[GameManager.playerColors[faction]];
+        border.GetComponent<LineRenderer>().material.color = GameManager.colors[GameManager.playerColors[faction]];
+        //play sound
+        audioSource.Play();
 
         deploymentTimer = 0;
     }
