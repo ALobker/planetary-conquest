@@ -558,12 +558,13 @@ public class CreateCamps : MonoBehaviour
         lr.startWidth = 0.1f;
         lr.endWidth = 0.1f;
         lr.useWorldSpace = false;
+        lr.loop = true;
         int ind = 0;
         for(int i = 0; i < points.Count; i++) {
             Vector3 p1 = points[i];
             Vector3 p2 = points[(i+1)%points.Count];
             float dist = Vector3.Distance(p1, p2);
-            int numSegs = Mathf.CeilToInt(dist / 1f);
+            int numSegs = Mathf.CeilToInt(dist / 0.5f);
             for (int j = 0; j < numSegs; j++)
             {
                 Vector3 a = Vector3.Slerp(p1, p2, (float)j / numSegs);
@@ -573,8 +574,8 @@ public class CreateCamps : MonoBehaviour
             }
             ind += numSegs;
         }
-        lr.positionCount = ind + 1;
-        lr.SetPosition(ind, GetSurfacePoint(points[0]));
+        //lr.positionCount = ind + 1;
+        //lr.SetPosition(ind, GetSurfacePoint(points[0]));
 
         camp.border = myLine;
         lr.material.color = GameManager.colors[GameManager.playerColors[camp.faction]];

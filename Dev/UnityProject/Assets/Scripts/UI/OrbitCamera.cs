@@ -26,7 +26,7 @@ public class OrbitCamera : MonoBehaviour
     public Transform _target;
 
     //The default distance of the camera from the target.
-    public float _distance = 20.0f;
+    public float _distance = 15.0f;
 
     //Control the speed of zooming and dezooming.
     public float _zoomStep = 1.0f;
@@ -47,13 +47,13 @@ public class OrbitCamera : MonoBehaviour
      */
     void Start()
     {
-        _distanceVector = new Vector3(0.0f, 0.0f, -_distance);
+        //_distanceVector = new Vector3(0.0f, 0.0f, -_distance);
 
         Vector2 angles = this.transform.localEulerAngles;
         _x = angles.x;
         _y = angles.y;
 
-        this.Rotate(_x, _y);
+        this.SetRotation(_x, _y);
     }
 
     /**

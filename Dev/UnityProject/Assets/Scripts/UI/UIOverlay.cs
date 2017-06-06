@@ -10,6 +10,7 @@ public class UIOverlay : MonoBehaviour
 {
     public Transform campParent;
     public GUISkin skin;
+    public Font MenuFont;
     public AudioClip soundMenuNext, soundMenuPrev;
 
     public float volumeMusic = 0.9f, volumeEffects = 0.9f;
@@ -18,13 +19,14 @@ public class UIOverlay : MonoBehaviour
     private int selectedSize = 1;
     private int winningPlayer = 0;
 
+    private int subMenu = 0;
     private int showDropdownType = -1;
     private int showDropdownFaction = -1;
     private int showDropdownColor = -1;
     private Rect popupSize = new Rect();
 
     private Texture2D[] texBlocks;
-
+    private Font defaultFont;
     private AudioSource audioSource;
 
     /************
@@ -68,6 +70,7 @@ public class UIOverlay : MonoBehaviour
             texBlocks[i].Apply();
         }
 
+        defaultFont = skin.label.font;
         audioSource = GetComponent<AudioSource>();
     }
 
@@ -93,6 +96,7 @@ public class UIOverlay : MonoBehaviour
     void OnGUI()
     {
         GUI.skin = skin;
+        GUI.skin.label.padding.left = 5;
         GUI.skin.label.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.button.fontSize = Mathf.RoundToInt(25f * uiScale);
         GUI.skin.toggle.fontSize = Mathf.RoundToInt(25f * uiScale);
@@ -113,10 +117,6 @@ public class UIOverlay : MonoBehaviour
                 DrawCreationMenu();
             else if (GameManager.gameState == GameManager.State.MultiPlayerMenu)
                 DrawMultiplayerMenu();
-            else if (GameManager.gameState == GameManager.State.OptionsMenu)
-                DrawOptionsMenu();
-            else if (GameManager.gameState == GameManager.State.CreditsMenu)
-                DrawCreditsMenu();
             else
                 DrawCreationMenu();
         }
@@ -125,10 +125,15 @@ public class UIOverlay : MonoBehaviour
     private void DrawMainMenu()
     {
         float lineHeight = 50;
-        float xOffset = ((Screen.width - 200f * uiScale) / 4f) - Screen.width - subScreenOffset();
-        float yOffset = Mathf.Round(Screen.height - (5 * lineHeight * uiScale)) / 2;
-        GUI.Label(new Rect(xOffset, yOffset - lineHeight, 200 * uiScale, lineHeight * uiScale), "Main menu");
-        if (GUI.Button(new Rect(xOffset, yOffset, 200 * uiScale, lineHeight * uiScale), "Tutorial"))
+        float buttonWidth = 250;
+        float xOffset = (Screen.width / 5f) - Screen.width - subScreenOffset();
+        float yOffset = Mathf.Min(Mathf.Round(Screen.height - (5 * 1.5f * lineHeight * uiScale)) / 2, Screen.height / 4);
+
+        skin.label.font = MenuFont;
+        GUI.Label(new Rect(xOffset, yOffset, buttonWidth + lineHeight * 0.5f, lineHeight * uiScale), "Main menu");
+        skin.label.font = defaultFont;
+
+        if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 1.5f * uiScale, buttonWidth, lineHeight * uiScale), "Tutorial"))
         {
             selectedSize = 0;
             cc.numCamps = 6;
@@ -141,7 +146,7 @@ public class UIOverlay : MonoBehaviour
             cc.CreateAllCamps(true);
             GameManager.gameState = GameManager.State.Playing;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * uiScale, 200 * uiScale, lineHeight * uiScale), "Single Player"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 1.5f * 2 * uiScale, buttonWidth, lineHeight * uiScale), "Single Player"))
         {
             uiSlideDir = 1f;
             //play next
@@ -149,30 +154,25 @@ public class UIOverlay : MonoBehaviour
             audioSource.Play();
             GameManager.gameState = GameManager.State.SinglePlayerMenu;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 2 * uiScale, 200 * uiScale, lineHeight * uiScale), "Multiplayer"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 1.5f * 3 * uiScale, buttonWidth, lineHeight * uiScale), "Multiplayer"))
         {
-            uiSlideDir = 1f;
+            //uiSlideDir = 1f;
             //play next
             audioSource.clip = soundMenuNext;
             audioSource.Play();
-            GameManager.gameState = GameManager.State.MultiPlayerMenu;
+            //GameManager.gameState = GameManager.State.MultiPlayerMenu;
+            subMenu = 1;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 3 * uiScale, 200 * uiScale, lineHeight * uiScale), "Options"))
+        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 1.5f * 4 * uiScale, buttonWidth, lineHeight * uiScale), "Settings"))
         {
-            uiSlideDir = 1f;
+            //uiSlideDir = 1f;
             //play next
             audioSource.clip = soundMenuNext;
             audioSource.Play();
-            GameManager.gameState = GameManager.State.OptionsMenu;
+            subMenu = 2;
         }
-        else if (GUI.Button(new Rect(xOffset, yOffset + lineHeight * 4 * uiScale, 200 * uiScale, lineHeight * uiScale), "Credits"))
-        {
-            uiSlideDir = 1f;
-            //play next
-            audioSource.clip = soundMenuNext;
-            audioSource.Play();
-            GameManager.gameState = GameManager.State.CreditsMenu;
-        }
+
+        GUI.Window(subMenu, new Rect(xOffset + buttonWidth + lineHeight * 0.5f, yOffset, (3 * Screen.width) / 5f - buttonWidth - lineHeight * 0.5f, Screen.height - yOffset * 2), DrawSubMenu, "");
     }
 
     private void DrawCreationMenu()
@@ -329,12 +329,6 @@ public class UIOverlay : MonoBehaviour
                     index++;
                 }
             }
-            //Debug.Log(intArrToString(GameManager.playerColors));
-            //Debug.Log(intArrToString(GameManager.playerType));
-            //Debug.Log(intArrToString(GameManager.playerCiv));
-            //Debug.Log(intArrToString(playercolors));
-            //Debug.Log(intArrToString(playertype));
-            //Debug.Log(intArrToString(playerciv));
             GameManager.playerColors = playercolors;
             GameManager.playerType = playertype;
             GameManager.playerCiv = playerciv;
@@ -369,6 +363,68 @@ public class UIOverlay : MonoBehaviour
             //play prev
             audioSource.clip = soundMenuPrev;
             audioSource.Play();
+        }
+    }
+
+    private void DrawSubMenu(int windowID)
+    {
+        int buttonHeight = 35;
+
+        if (windowID == 0)
+        {
+            skin.label.font = MenuFont;
+            GUI.Label(new Rect(5, 5, 300 * uiScale, buttonHeight * 2 * uiScale), "Planetary Conquest");
+            skin.label.font = defaultFont;
+        }
+        else if (windowID == 1)
+        {
+            skin.label.font = MenuFont;
+            GUI.Label(new Rect(5, 5, 300 * uiScale, buttonHeight * uiScale), "Multiplayer");
+            skin.label.font = defaultFont;
+
+            //host
+            //join lan
+            //join internet
+            if (GUI.Button(new Rect(5, 5 + buttonHeight * uiScale + 20f, 100 * uiScale, buttonHeight * uiScale), "Host"))
+            {
+                uiSlideDir = 1f;
+                //play next
+                audioSource.clip = soundMenuNext;
+                audioSource.Play();
+                GameManager.gameState = GameManager.State.MultiPlayerMenu;
+            }
+            GUI.TextField(new Rect(5, 5 + buttonHeight * 2 * uiScale + 30f, 100 * uiScale, buttonHeight * uiScale), "IP");
+            if (GUI.Button(new Rect(5 + 100 * uiScale + 10f, 5 + buttonHeight * 2 * uiScale + 30f, 100 * uiScale, buttonHeight * uiScale), "Join"))
+            {
+                uiSlideDir = 1f;
+                //play next
+                audioSource.clip = soundMenuNext;
+                audioSource.Play();
+                GameManager.gameState = GameManager.State.MultiPlayerMenu;
+            }
+        }
+        else if (windowID == 2)
+        {
+            skin.label.font = MenuFont;
+            GUI.Label(new Rect(5, 5, 300 * uiScale, buttonHeight * uiScale), "Settings");
+            skin.label.font = defaultFont;
+
+            //sound effect volume
+            volumeEffects = GUI.HorizontalSlider(new Rect(20, 50, 300, 20), volumeEffects, 0, 1f);
+            GUI.Label(new Rect(330, 45, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeEffects * 100));
+            audioSource.volume = 0.5f * volumeEffects;
+
+            //music volume
+            volumeMusic = GUI.HorizontalSlider(new Rect(20, 100, 300, 20), volumeMusic, 0, 1f);
+            GUI.Label(new Rect(330, 95, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeMusic * 100));
+
+            //ui size
+            float currentPos = Mathf.Log(uiScale) / Mathf.Log(2);
+            float scale = Mathf.Round(GUI.HorizontalSlider(new Rect(20, 150, 300, 20), currentPos, -.5f, .5f) * 10f) / 10f;
+            uiScale = Mathf.Pow(2f, scale);
+            GUI.Label(new Rect(20f - (32 * uiScale + 10) / 2, 170, 32 * uiScale + 10, 25 * uiScale + 6), "0.5");
+            GUI.Label(new Rect(170f - (12 * uiScale + 10) / 2, 170, 12 * uiScale + 10, 25 * uiScale + 6), "1");
+            GUI.Label(new Rect(320f - (12 * uiScale + 10) / 2, 170, 12 * uiScale + 10, 25 * uiScale + 6), "2");
         }
     }
 
@@ -440,9 +496,7 @@ public class UIOverlay : MonoBehaviour
     private void DrawMultiplayerMenu()
     {
         int buttonHeight = 35;
-        //join lan
-        //join online
-        //host game
+
         if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
         {
             uiSlideDir = -1f;
@@ -451,57 +505,6 @@ public class UIOverlay : MonoBehaviour
             audioSource.Play();
         }
     }
-
-    private void DrawOptionsMenu()
-    {
-        int buttonHeight = 35;
-        //sound effect volume
-        volumeEffects = GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 220, 300, 30 * uiScale), volumeEffects, 0, 1f);
-        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 230, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeEffects * 100));
-        audioSource.volume = 0.5f * volumeEffects;
-
-        //music volume
-        volumeMusic = GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 120, 300, 30 * uiScale), volumeMusic, 0, 1f);
-        GUI.Label(new Rect((Screen.width + 300) / 2 - subScreenOffset(), Screen.height / 2 - 130, 50 * uiScale, buttonHeight * uiScale), "" + Mathf.RoundToInt(volumeMusic * 100));
-
-        //ui size
-        float currentPos = Mathf.Log(uiScale) / Mathf.Log(2);
-        float scale = Mathf.Round(GUI.HorizontalSlider(new Rect((Screen.width - 300) / 2 - subScreenOffset(), Screen.height / 2 - 20, 300, 30 * uiScale), currentPos, -.5f, .5f) * 10f) / 10f;
-        uiScale = Mathf.Pow(2f, scale);
-        GUI.Label(new Rect((Screen.width - 300f - 30f * uiScale - 20f) / 2 - subScreenOffset(), Screen.height / 2, 30f * uiScale + 20f, 25 * uiScale + 5), "0.5");
-        GUI.Label(new Rect((Screen.width - 10f * uiScale - 20f) / 2 - subScreenOffset(), Screen.height / 2, 10f * uiScale + 20f, 25 * uiScale + 5), "1");
-        GUI.Label(new Rect((Screen.width + 300 - 10f * uiScale - 20f) / 2 - subScreenOffset(), Screen.height / 2, 10f * uiScale + 20f, 25 * uiScale + 5), "2");
-
-        //colorblind mode
-        //"Off"
-        //"Deuteranopia/Protanopia"
-        if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
-        {
-            uiSlideDir = -1f;
-            //play prev
-            audioSource.clip = soundMenuPrev;
-            audioSource.Play();
-        }
-    }
-
-    private void DrawCreditsMenu()
-    {
-        int buttonHeight = 35;
-        //about us
-        //art
-        //models
-        //programming
-        //design
-        //ai
-        if (GUI.Button(new Rect(50 - subScreenOffset(), Screen.height - 50 - buttonHeight * uiScale, 200 * uiScale, buttonHeight * uiScale), "Back"))
-        {
-            uiSlideDir = -1f;
-            //play prev
-            audioSource.clip = soundMenuPrev;
-            audioSource.Play();
-        }
-    }
-
 
     private void DrawIngameUI()
     {
